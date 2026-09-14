@@ -13,6 +13,7 @@ import {
   restoreProgress,
   COURSE_CATALOG,
   getCoursePath,
+  LESSON_ENRICHMENTS,
 } from '../dist/lesson-engine.js';
 
 test('用直尺兩端刻度的差算出物品長度', () => {
@@ -101,4 +102,32 @@ test('首頁課程路徑依序提供年紀、分類與單元', () => {
 test('找不到課程時不會回傳錯誤的課程路徑', () => {
   assert.equal(getCoursePath('unknown-course'), null);
   assert.equal(COURSE_CATALOG.length, 1);
+});
+
+test('七個關卡都有完整的圖文教學素材', () => {
+  assert.equal(LESSON_ENRICHMENTS.length, 7);
+  for (const lesson of LESSON_ENRICHMENTS) {
+    assert.equal(typeof lesson.storyTitle, 'string');
+    assert.ok(lesson.storyText.length >= 30);
+    assert.equal(lesson.steps.length, 3);
+    assert.ok(lesson.mistake.length >= 15);
+    assert.ok(lesson.remember.length >= 10);
+    assert.match(lesson.image, /^assets\/.+\.(png|jpg)$/);
+    assert.ok(lesson.imageAlt.length >= 10);
+  }
+});
+
+test('七關共用三組一致的故事插畫', () => {
+  assert.equal(new Set(LESSON_ENRICHMENTS.map((lesson) => lesson.image)).size, 3);
+});
+
+test('七個關卡都有專屬且可重播的教學動畫設定', () => {
+  assert.deepEqual(
+    LESSON_ENRICHMENTS.map((lesson) => lesson.demoType),
+    ['compare', 'units', 'centimeter', 'measure', 'draw', 'calculate', 'challenge'],
+  );
+  for (const lesson of LESSON_ENRICHMENTS) {
+    assert.ok(lesson.demoTitle.length >= 6);
+    assert.ok(lesson.demoCaption.length >= 15);
+  }
 });
