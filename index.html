@@ -3,120 +3,115 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#1456a0" />
-    <meta name="description" content="適合國小二年級的圖文、語音與互動式公分學習網站。" />
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23ffd33d'/%3E%3Ctext x='32' y='42' text-anchor='middle' font-family='Arial' font-size='27' font-weight='700' fill='%2317304f'%3Ecm%3C/text%3E%3C/svg%3E" />
-    <title>公分探險隊｜二年級數學互動學習</title>
+    <meta name="theme-color" content="#163b70" />
+    <meta name="description" content="適合 7～8 歲兒童的二年級上學期數學圖文、語音與動畫互動課程。" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23ffd64a'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-size='32'%3E✦%3C/text%3E%3C/svg%3E" />
+    <title>二上數學冒險島｜互動學習</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <a class="skip-link" href="#main-content">跳到主要內容</a>
-
     <header class="site-header">
-      <button class="brand" id="home-button" aria-label="回到探險首頁">
-        <span class="brand-mark" aria-hidden="true">cm</span>
-        <span><strong>公分探險隊</strong><small>二年級數學</small></span>
+      <button class="brand" id="home-button" aria-label="回到課程首頁">
+        <span class="brand-mark" aria-hidden="true">✦</span>
+        <span><strong>數學冒險島</strong><small>二年級上學期</small></span>
       </button>
       <div class="header-actions">
-        <div class="star-counter" aria-live="polite"><span aria-hidden="true">★</span><strong id="star-count">0</strong><span>/ 7</span></div>
-        <button class="icon-button" id="sound-toggle" aria-pressed="true" aria-label="關閉音效">🔊</button>
+        <div class="star-counter" aria-live="polite"><span aria-hidden="true">★</span><strong id="star-count">0</strong><span id="star-total">/ 37</span></div>
+        <button class="icon-button" id="sound-toggle" aria-pressed="true" aria-label="關閉聲音">🔊</button>
       </div>
     </header>
 
     <main id="main-content">
-      <section class="welcome-view" id="welcome-view">
-        <section class="course-entry" aria-labelledby="course-entry-title">
-          <div class="course-picker">
-            <p class="kicker">選好課程，開始今天的任務</p>
-            <h1 id="course-entry-title">今天想學什麼？</h1>
-            <p class="picker-lead">跟著三個步驟找到你的課程。</p>
-
-            <div class="selection-path" aria-label="目前選擇的課程路徑">
-              <article class="path-card selected">
-                <div class="path-top"><span>01</span><strong>年紀</strong><span class="path-check" aria-hidden="true">✓</span></div>
-                <div class="path-value"><span class="path-icon" aria-hidden="true">🧒</span><div><h2 id="selected-grade">二年級</h2><p id="selected-age">7～8 歲</p></div></div>
-              </article>
-              <span class="path-arrow" aria-hidden="true">→</span>
-              <article class="path-card selected">
-                <div class="path-top"><span>02</span><strong>課程分類</strong><span class="path-check" aria-hidden="true">✓</span></div>
-                <div class="path-value"><span class="path-icon" aria-hidden="true">＋</span><div><h2 id="selected-category">數學</h2><p>動手想一想</p></div></div>
-              </article>
-              <span class="path-arrow" aria-hidden="true">→</span>
-              <article class="path-card selected unit-path-card">
-                <div class="path-top"><span>03</span><strong>單元</strong><span class="path-check" aria-hidden="true">✓</span></div>
-                <div class="path-value"><span class="path-icon ruler-icon" aria-hidden="true">cm</span><div><h2 id="selected-unit-title">認識公分</h2><p id="selected-unit">第三單元</p></div></div>
-              </article>
-            </div>
-
-            <div class="selected-course">
-              <div>
-                <span class="course-status">已選課程</span>
-                <h2><span id="course-unit-label">第三單元</span>　認識公分</h2>
-                <p>從比較長短開始，學會用直尺量、畫線段，再挑戰長度加減。</p>
-              </div>
-              <button class="primary-button" id="start-button"><span>開始第 1 關</span><span aria-hidden="true">→</span></button>
+      <section id="home-view" class="home-view">
+        <section class="hero-grid" aria-labelledby="home-title">
+          <div class="hero-copy">
+            <p class="kicker">HANLIN-ALIGNED LEARNING ADVENTURE</p>
+            <h1 id="home-title">今天，想去哪一座<br /><em>數學小島</em>探險？</h1>
+            <p>每個單元都有一個有溫度的故事、一段看得懂的動畫，還有可以親手作答的小任務。慢慢想，也能走得很遠。</p>
+            <div class="course-path" aria-label="目前課程分類">
+              <span><small>年紀</small><strong>7～8 歲</strong></span><b aria-hidden="true">›</b>
+              <span><small>課程分類</small><strong>數學</strong></span><b aria-hidden="true">›</b>
+              <span><small>年級學期</small><strong>二年級上學期</strong></span><b aria-hidden="true">›</b>
+              <span><small>單元</small><strong>10 個單元可選</strong></span>
             </div>
           </div>
-
-          <figure class="course-cover">
-            <img src="assets/classroom-adventure-v2.jpg" alt="兩位學生和松鼠把鉛筆與直尺分開放在桌上，準備展開公分探險" />
-            <figcaption><span><strong>7</strong> 個互動關卡</span><span><strong>🔊</strong> 語音導讀</span></figcaption>
+          <figure class="hero-art">
+            <img src="assets/number-market-story.jpg" alt="兩位學生與松鼠在明亮教室的森林小舖進行數學探索" />
+            <figcaption>情境圖負責說故事；數字、刻度和答案都由互動圖精確呈現。</figcaption>
           </figure>
         </section>
 
-        <section class="mission-section" aria-labelledby="mission-title">
+        <section class="unit-section" aria-labelledby="unit-title">
           <div class="section-heading">
-            <div><p class="eyebrow">學習地圖</p><h2 id="mission-title">七站公分探險</h2></div>
-            <p>每一站先觀察、再動手。答對任務，就能收集一顆星！</p>
+            <div><p class="eyebrow">選擇單元</p><h2 id="unit-title">十座小島，從好奇心出發</h2></div>
+            <p>可以從任何單元開始。進入單元後，依序完成任務，每答對一課就收集一顆星。</p>
           </div>
-          <div class="mission-map" id="mission-map"></div>
-        </section>
-
-        <section class="teacher-note" aria-label="學習重點">
-          <div class="note-icon" aria-hidden="true">💡</div>
-          <div><p class="eyebrow">學習祕訣</p><h2>眼睛看、手指量、嘴巴說</h2><p>每一題都可以按「聽老師說」。別急著猜，先把起點、終點和單位找出來。</p></div>
+          <div id="unit-grid" class="unit-grid"></div>
         </section>
       </section>
 
-      <section class="lesson-view" id="lesson-view" hidden>
-        <aside class="lesson-rail" aria-label="課程章節">
-          <p class="rail-label">探險進度</p>
-          <nav id="lesson-nav"></nav>
-          <button class="reset-button" id="reset-button">重新開始</button>
-        </aside>
+      <section id="unit-view" class="unit-view" hidden>
+        <div class="unit-hero" id="unit-hero">
+          <div class="unit-hero-copy">
+            <button class="back-button" id="back-home">← 全部單元</button>
+            <p class="eyebrow" id="unit-eyebrow"></p>
+            <h1 id="unit-name"></h1>
+            <p id="unit-summary"></p>
+            <div class="unit-progress"><span id="unit-progress-text"></span><div><i id="unit-progress-bar"></i></div></div>
+          </div>
+          <figure><img id="unit-image" alt="" /><figcaption id="unit-image-note"></figcaption></figure>
+        </div>
 
+        <section class="story-card" aria-labelledby="story-title">
+          <div class="story-label">先聽一個故事</div>
+          <div>
+            <h2 id="story-title"></h2>
+            <p id="story-opening"></p>
+            <blockquote id="story-dialogue"></blockquote>
+            <p id="story-closing"></p>
+          </div>
+          <button class="listen-button" id="story-listen"><span aria-hidden="true">🔊</span> 聽故事</button>
+        </section>
+
+        <section class="lesson-map-section" aria-labelledby="lesson-map-title">
+          <div class="section-heading compact">
+            <div><p class="eyebrow">學習任務</p><h2 id="lesson-map-title">一步一步，走完這座島</h2></div>
+            <p id="curriculum-sections"></p>
+          </div>
+          <div id="lesson-map" class="lesson-map"></div>
+        </section>
+      </section>
+
+      <section id="lesson-view" class="lesson-view" hidden>
+        <aside class="lesson-rail">
+          <button class="back-button light" id="back-unit">← 回到單元</button>
+          <p class="rail-title" id="rail-title"></p>
+          <nav id="lesson-nav" aria-label="本單元課程"></nav>
+        </aside>
         <article class="lesson-stage">
-          <div class="lesson-topline">
-            <button class="text-button" id="back-home">← 學習地圖</button>
-            <span id="lesson-position">第 1 關，共 7 關</span>
-          </div>
-          <div class="lesson-card">
-            <div class="lesson-heading">
-              <div><p class="eyebrow" id="lesson-eyebrow"></p><h1 id="lesson-title"></h1><p class="lesson-goal" id="lesson-goal"></p></div>
-              <button class="listen-button" id="listen-button"><span aria-hidden="true">🔊</span> 聽老師說</button>
+          <div class="lesson-topline"><span id="lesson-position"></span><button class="listen-button small" id="lesson-listen">🔊 聽老師說</button></div>
+          <section class="lesson-card">
+            <header><p class="eyebrow" id="lesson-code"></p><h1 id="lesson-name"></h1><p id="lesson-goal"></p></header>
+            <div class="story-beat"><span aria-hidden="true">💬</span><p id="story-beat"></p></div>
+            <div class="learning-grid">
+              <section class="steps-panel"><p class="panel-label">跟著做三步</p><ol id="lesson-steps"></ol></section>
+              <section class="visual-panel"><div class="visual-heading"><span>看動畫想一想</span><button id="replay-button">↻ 重播</button></div><div id="math-visual" class="math-visual"></div></section>
             </div>
-            <div id="lesson-content"></div>
-            <section class="activity-panel" id="activity-panel" aria-labelledby="activity-title"></section>
-            <div class="feedback" id="feedback" role="status" aria-live="polite"></div>
-          </div>
-          <div class="lesson-pager">
-            <button class="secondary-button" id="prev-button">← 上一關</button>
-            <button class="primary-button" id="next-button"><span>下一關</span><span aria-hidden="true">→</span></button>
-          </div>
+            <div class="tip-grid"><section class="mistake-box"><strong>小心這個陷阱</strong><p id="lesson-mistake"></p></section><section class="remember-box"><strong>把它帶走</strong><p id="lesson-remember"></p></section></div>
+            <section class="activity-panel" aria-labelledby="question-title"><p class="panel-label">換你試試看</p><h2 id="question-title"></h2><div id="question-options" class="question-options"></div><div id="feedback" class="feedback" role="status" aria-live="polite"></div></section>
+          </section>
+          <div class="lesson-pager"><button class="secondary-button" id="prev-button">← 上一課</button><button class="primary-button" id="next-button">下一課 →</button></div>
         </article>
       </section>
     </main>
 
-    <dialog class="certificate" id="certificate">
+    <dialog id="celebration" class="celebration">
       <button class="dialog-close" id="dialog-close" aria-label="關閉">×</button>
-      <div class="certificate-stars" aria-hidden="true">★ ★ ★</div>
-      <p class="eyebrow">任務完成</p>
-      <h2>公分達人</h2>
-      <p>你會比較、測量、畫線，也會算長度了！</p>
-      <div class="badge" aria-hidden="true"><span>cm</span><strong>7</strong></div>
-      <button class="primary-button" id="certificate-home">回到學習地圖</button>
+      <div class="celebration-mark" aria-hidden="true">★</div><p class="eyebrow">單元完成</p><h2 id="celebration-title"></h2>
+      <p>你沒有只記住答案，還學會觀察、說理由和檢查。這顆星，是你認真思考的證明。</p>
+      <button class="primary-button" id="celebration-home">回到十個單元</button>
     </dialog>
-
     <script type="module" src="app.js"></script>
   </body>
 </html>
