@@ -6,6 +6,7 @@ import {
   evaluateChoice,
   scoreQuiz,
   restoreProgress,
+  getCoursePath,
 } from './lesson-engine.js';
 
 const LESSONS = [
@@ -395,5 +396,12 @@ document.querySelector('#dialog-close').addEventListener('click', () => elements
 document.querySelector('#certificate-home').addEventListener('click', () => { elements.certificate.close(); goHome(); });
 
 elements.star.textContent = progress.stars;
+const selectedCourse = getCoursePath('grade2-math-centimeter');
+document.querySelector('#selected-grade').textContent = selectedCourse.grade;
+document.querySelector('#selected-age').textContent = selectedCourse.age;
+document.querySelector('#selected-category').textContent = selectedCourse.category;
+document.querySelector('#selected-unit').textContent = selectedCourse.unit;
+document.querySelector('#selected-unit-title').textContent = selectedCourse.title;
+document.querySelector('#course-unit-label').textContent = selectedCourse.unit;
 renderMap();
 registerWebMCP();

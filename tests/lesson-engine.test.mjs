@@ -11,6 +11,8 @@ import {
   evaluateChoice,
   scoreQuiz,
   restoreProgress,
+  COURSE_CATALOG,
+  getCoursePath,
 } from '../dist/lesson-engine.js';
 
 test('用直尺兩端刻度的差算出物品長度', () => {
@@ -84,4 +86,19 @@ test('總挑戰以五題中的答對數計分', () => {
 test('載入損壞的進度資料時會安全地重新開始', () => {
   assert.deepEqual(restoreProgress('{not-json}', 7), createProgress(7));
   assert.deepEqual(restoreProgress('{"stars":99,"completed":[true]}', 7), createProgress(7));
+});
+
+test('首頁課程路徑依序提供年紀、分類與單元', () => {
+  assert.deepEqual(getCoursePath('grade2-math-centimeter'), {
+    age: '7～8 歲',
+    grade: '二年級',
+    category: '數學',
+    unit: '第三單元',
+    title: '認識公分',
+  });
+});
+
+test('找不到課程時不會回傳錯誤的課程路徑', () => {
+  assert.equal(getCoursePath('unknown-course'), null);
+  assert.equal(COURSE_CATALOG.length, 1);
 });

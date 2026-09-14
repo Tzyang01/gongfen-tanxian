@@ -25,16 +25,44 @@
 
     <main id="main-content">
       <section class="welcome-view" id="welcome-view">
-        <div class="hero">
-          <img src="assets/classroom-adventure.png" alt="兩位學生和松鼠一起用直尺測量鉛筆，準備展開公分探險" />
-          <div class="hero-shade" aria-hidden="true"></div>
-          <div class="hero-copy">
-            <p class="kicker">任務：找回 7 顆公分星</p>
-            <h1>量一量，<br /><em>世界有多長？</em></h1>
-            <p>跟著栗栗從比較長短開始，學會用直尺量、畫線段，還能解決生活中的長度問題。</p>
-            <button class="primary-button" id="start-button"><span>開始第 1 關</span><span aria-hidden="true">→</span></button>
+        <section class="course-entry" aria-labelledby="course-entry-title">
+          <div class="course-picker">
+            <p class="kicker">選好課程，開始今天的任務</p>
+            <h1 id="course-entry-title">今天想學什麼？</h1>
+            <p class="picker-lead">跟著三個步驟找到你的課程。</p>
+
+            <div class="selection-path" aria-label="目前選擇的課程路徑">
+              <article class="path-card selected">
+                <div class="path-top"><span>01</span><strong>年紀</strong><span class="path-check" aria-hidden="true">✓</span></div>
+                <div class="path-value"><span class="path-icon" aria-hidden="true">🧒</span><div><h2 id="selected-grade">二年級</h2><p id="selected-age">7～8 歲</p></div></div>
+              </article>
+              <span class="path-arrow" aria-hidden="true">→</span>
+              <article class="path-card selected">
+                <div class="path-top"><span>02</span><strong>課程分類</strong><span class="path-check" aria-hidden="true">✓</span></div>
+                <div class="path-value"><span class="path-icon" aria-hidden="true">＋</span><div><h2 id="selected-category">數學</h2><p>動手想一想</p></div></div>
+              </article>
+              <span class="path-arrow" aria-hidden="true">→</span>
+              <article class="path-card selected unit-path-card">
+                <div class="path-top"><span>03</span><strong>單元</strong><span class="path-check" aria-hidden="true">✓</span></div>
+                <div class="path-value"><span class="path-icon ruler-icon" aria-hidden="true">cm</span><div><h2 id="selected-unit-title">認識公分</h2><p id="selected-unit">第三單元</p></div></div>
+              </article>
+            </div>
+
+            <div class="selected-course">
+              <div>
+                <span class="course-status">已選課程</span>
+                <h2><span id="course-unit-label">第三單元</span>　認識公分</h2>
+                <p>從比較長短開始，學會用直尺量、畫線段，再挑戰長度加減。</p>
+              </div>
+              <button class="primary-button" id="start-button"><span>開始第 1 關</span><span aria-hidden="true">→</span></button>
+            </div>
           </div>
-        </div>
+
+          <figure class="course-cover">
+            <img src="assets/classroom-adventure.png" alt="兩位學生和松鼠一起用直尺測量鉛筆，準備展開公分探險" />
+            <figcaption><span><strong>7</strong> 個互動關卡</span><span><strong>🔊</strong> 語音導讀</span></figcaption>
+          </figure>
+        </section>
 
         <section class="mission-section" aria-labelledby="mission-title">
           <div class="section-heading">

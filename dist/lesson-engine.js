@@ -1,3 +1,21 @@
+export const COURSE_CATALOG = [
+  {
+    id: 'grade2-math-centimeter',
+    age: '7～8 歲',
+    grade: '二年級',
+    category: '數學',
+    unit: '第三單元',
+    title: '認識公分',
+  },
+];
+
+export function getCoursePath(courseId) {
+  const course = COURSE_CATALOG.find((item) => item.id === courseId);
+  if (!course) return null;
+  const { age, grade, category, unit, title } = course;
+  return { age, grade, category, unit, title };
+}
+
 export const LESSON_BLUEPRINT = [
   { id: 'compare', title: '長度偵探', short: '比一比', color: '#ef6a55' },
   { id: 'units', title: '公平的測量', short: '個別單位', color: '#f2ad28' },
