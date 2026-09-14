@@ -7,6 +7,7 @@ import {
   scoreQuiz,
   restoreProgress,
   getCoursePath,
+  LESSON_ENRICHMENTS,
 } from './lesson-engine.js';
 
 const LESSONS = [
@@ -148,7 +149,8 @@ function speakLesson() {
     return;
   }
   window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(LESSONS[currentLesson].narration);
+  const narration = `${LESSONS[currentLesson].narration} 請記住：${LESSON_ENRICHMENTS[currentLesson].remember}`;
+  const utterance = new SpeechSynthesisUtterance(narration);
   utterance.lang = 'zh-TW';
   utterance.rate = .9;
   utterance.pitch = 1.05;
@@ -181,10 +183,72 @@ function renderNav() {
   }).join('');
 }
 
+function animationVisual(type) {
+  if (type === 'compare') {
+    return `<div class="demo-compare" aria-hidden="true"><span class="start-line"></span><div class="demo-object pencil-long"><span>長鉛筆</span></div><div class="demo-object pencil-short"><span>短鉛筆</span></div></div>`;
+  }
+  if (type === 'units') {
+    return `<div class="demo-units" aria-hidden="true"><div><small>小單位</small><div class="demo-unit-row small">${'<span></span>'.repeat(8)}</div></div><div><small>大單位</small><div class="demo-unit-row big">${'<span></span>'.repeat(4)}</div></div></div>`;
+  }
+  if (type === 'centimeter') {
+    return `<div class="demo-centimeter" aria-hidden="true"><div class="demo-cm-ruler"><span class="cm-zero">0</span><span class="cm-one">1</span><i></i></div><strong>這一段就是 1 cm</strong></div>`;
+  }
+  if (type === 'measure') {
+    return `<div class="demo-measure" aria-hidden="true"><div class="demo-scale"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span><i class="demo-pencil"></i></div><strong>9－2＝7 公分</strong></div>`;
+  }
+  if (type === 'draw') {
+    return `<div class="demo-draw" aria-hidden="true"><span class="draw-dot start"></span><i></i><span class="draw-dot end"></span><strong>0</strong><strong>6 cm</strong></div>`;
+  }
+  if (type === 'calculate') {
+    return `<div class="demo-calculate" aria-hidden="true"><span class="demo-ribbon blue">8 cm</span><span class="demo-plus">＋</span><span class="demo-ribbon coral">5 cm</span><strong>＝ 13 cm</strong></div>`;
+  }
+  return `<div class="demo-challenge" aria-hidden="true">${['起點', '終點', '數字', '單位', '問題'].map((label) => `<span>${label}</span>`).join('')}<strong>準備完成！</strong></div>`;
+}
+
+function renderAnimationDemo(enrichment) {
+  return `<section class="animation-card is-replaying" data-animation-demo="${enrichment.demoType}">
+    <div class="animation-copy">
+      <span class="micro-label">動畫演示</span>
+      <h2>${enrichment.demoTitle}</h2>
+      <p>${enrichment.demoCaption}</p>
+    </div>
+    <div class="animation-stage" role="img" aria-label="${enrichment.demoCaption}">${animationVisual(enrichment.demoType)}</div>
+    <button class="replay-button" type="button" data-replay-animation><span aria-hidden="true">↻</span> 重播動畫</button>
+  </section>`;
+}
+
 function renderConcepts(concepts) {
-  return `<div class="concept-grid">${concepts.map((item, index) => `
+  const enrichment = LESSON_ENRICHMENTS[currentLesson];
+  return `
+    <section class="story-card">
+      <img src="${enrichment.image}" alt="${enrichment.imageAlt}" loading="lazy" />
+      <div class="story-copy">
+        <span class="story-kicker">栗栗的發現</span>
+        <h2>${enrichment.storyTitle}</h2>
+        <p>${enrichment.storyText}</p>
+      </div>
+    </section>
+    <div class="concept-grid">${concepts.map((item, index) => `
     <section class="concept-card ${index % 2 ? 'warm' : ''}"><h2>${item[0]}</h2><p>${item[1]}</p>${currentLesson === 2 && index === 0 ? '<span class="mini-rule">1 公分 = 1 cm</span>' : ''}</section>
-  `).join('')}</div>`;
+    `).join('')}</div>
+    <div class="teaching-deck">
+      <section class="steps-card">
+        <span class="micro-label">跟著做</span>
+        <h2>三步驟學會</h2>
+        <ol>${enrichment.steps.map((step, index) => `<li><span>${index + 1}</span><p>${step}</p></li>`).join('')}</ol>
+      </section>
+      <div class="tip-stack">
+        <aside class="mistake-card">
+          <span class="micro-label">小心這個陷阱</span>
+          <p>${enrichment.mistake}</p>
+        </aside>
+        <aside class="remember-card">
+          <span class="micro-label">一句話記住</span>
+          <p>${enrichment.remember}</p>
+        </aside>
+      </div>
+    </div>
+    ${renderAnimationDemo(enrichment)}`;
 }
 
 function rulerMarkup(start, length, showObject = true) {
@@ -367,6 +431,15 @@ elements.activity.addEventListener('submit', (event) => {
   if (event.target.id !== 'quiz-form') return;
   event.preventDefault();
   handleQuiz(event.target);
+});
+
+elements.content.addEventListener('click', (event) => {
+  const replayButton = event.target.closest('[data-replay-animation]');
+  if (!replayButton) return;
+  const demo = replayButton.closest('[data-animation-demo]');
+  demo.classList.remove('is-replaying');
+  void demo.offsetWidth;
+  demo.classList.add('is-replaying');
 });
 
 document.querySelector('#start-button').addEventListener('click', () => openLesson(progress.completed.findIndex((item) => !item) < 0 ? 0 : progress.completed.findIndex((item) => !item)));
