@@ -8,6 +8,7 @@ import {
   restoreProgress,
   getCoursePath,
   LESSON_ENRICHMENTS,
+  createRulerMeasurement,
 } from './lesson-engine.js';
 
 const LESSONS = [
@@ -149,7 +150,8 @@ function speakLesson() {
     return;
   }
   window.speechSynthesis.cancel();
-  const narration = `${LESSONS[currentLesson].narration} 請記住：${LESSON_ENRICHMENTS[currentLesson].remember}`;
+  const story = LESSON_ENRICHMENTS[currentLesson];
+  const narration = `${LESSONS[currentLesson].narration} ${story.storyText} ${story.dialogue} ${story.storyClosing} 請記住：${story.remember}`;
   const utterance = new SpeechSynthesisUtterance(narration);
   utterance.lang = 'zh-TW';
   utterance.rate = .9;
@@ -183,26 +185,30 @@ function renderNav() {
   }).join('');
 }
 
-function animationVisual(type) {
+function animationVisual(enrichment) {
+  const { demoType: type, demoData } = enrichment;
   if (type === 'compare') {
     return `<div class="demo-compare" aria-hidden="true"><span class="start-line"></span><div class="demo-object pencil-long"><span>長鉛筆</span></div><div class="demo-object pencil-short"><span>短鉛筆</span></div></div>`;
   }
   if (type === 'units') {
-    return `<div class="demo-units" aria-hidden="true"><div><small>小單位</small><div class="demo-unit-row small">${'<span></span>'.repeat(8)}</div></div><div><small>大單位</small><div class="demo-unit-row big">${'<span></span>'.repeat(4)}</div></div></div>`;
+    return `<div class="demo-units" aria-hidden="true"><div><small>小單位：${demoData.smallUnitCount} 個</small><div class="demo-unit-row small">${'<span></span>'.repeat(demoData.smallUnitCount)}</div></div><div><small>大單位：${demoData.largeUnitCount} 個</small><div class="demo-unit-row big">${'<span></span>'.repeat(demoData.largeUnitCount)}</div></div></div>`;
   }
   if (type === 'centimeter') {
     return `<div class="demo-centimeter" aria-hidden="true"><div class="demo-cm-ruler"><span class="cm-zero">0</span><span class="cm-one">1</span><i></i></div><strong>這一段就是 1 cm</strong></div>`;
   }
   if (type === 'measure') {
-    return `<div class="demo-measure" aria-hidden="true"><div class="demo-scale"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span><i class="demo-pencil"></i></div><strong>9－2＝7 公分</strong></div>`;
+    const measurement = createRulerMeasurement(demoData.start, demoData.end, demoData.max);
+    const ticks = Array.from({ length: measurement.max + 1 }, (_, tick) => `<span style="--tick:${(tick / measurement.max) * 100}">${tick}</span>`).join('');
+    return `<div class="demo-measure" aria-hidden="true"><div class="demo-scale" style="--measure-start:${measurement.startPercent};--measure-span:${measurement.spanPercent};--measure-end:${measurement.endPercent}">${ticks}<i class="demo-pencil"></i></div><strong>${measurement.end}－${measurement.start}＝${measurement.length} 公分</strong></div>`;
   }
   if (type === 'draw') {
     return `<div class="demo-draw" aria-hidden="true"><span class="draw-dot start"></span><i></i><span class="draw-dot end"></span><strong>0</strong><strong>6 cm</strong></div>`;
   }
   if (type === 'calculate') {
-    return `<div class="demo-calculate" aria-hidden="true"><span class="demo-ribbon blue">8 cm</span><span class="demo-plus">＋</span><span class="demo-ribbon coral">5 cm</span><strong>＝ 13 cm</strong></div>`;
+    const joinPercent = (demoData.firstLength / demoData.totalLength) * 100;
+    return `<div class="demo-calculate" style="--first:${demoData.firstLength}fr;--second:${demoData.secondLength}fr;--join:${joinPercent}" aria-hidden="true"><span class="demo-ribbon blue">${demoData.firstLength} cm</span><span class="demo-plus">＋</span><span class="demo-ribbon coral">${demoData.secondLength} cm</span><strong>＝ ${demoData.totalLength} cm</strong></div>`;
   }
-  return `<div class="demo-challenge" aria-hidden="true">${['起點', '終點', '數字', '單位', '問題'].map((label) => `<span>${label}</span>`).join('')}<strong>準備完成！</strong></div>`;
+  return `<div class="demo-challenge" aria-hidden="true">${demoData.clues.map((label) => `<span>${label}</span>`).join('')}<strong>準備完成！</strong></div>`;
 }
 
 function renderAnimationDemo(enrichment) {
@@ -212,7 +218,7 @@ function renderAnimationDemo(enrichment) {
       <h2>${enrichment.demoTitle}</h2>
       <p>${enrichment.demoCaption}</p>
     </div>
-    <div class="animation-stage" role="img" aria-label="${enrichment.demoCaption}">${animationVisual(enrichment.demoType)}</div>
+    <div class="animation-stage" role="img" aria-label="${enrichment.demoCaption}">${animationVisual(enrichment)}</div>
     <button class="replay-button" type="button" data-replay-animation><span aria-hidden="true">↻</span> 重播動畫</button>
   </section>`;
 }
@@ -221,11 +227,16 @@ function renderConcepts(concepts) {
   const enrichment = LESSON_ENRICHMENTS[currentLesson];
   return `
     <section class="story-card">
-      <img src="${enrichment.image}" alt="${enrichment.imageAlt}" loading="lazy" />
+      <figure class="story-figure">
+        <img src="${enrichment.image}" alt="${enrichment.imageAlt}" loading="lazy" />
+        <figcaption>${enrichment.imageNote}</figcaption>
+      </figure>
       <div class="story-copy">
         <span class="story-kicker">栗栗的發現</span>
         <h2>${enrichment.storyTitle}</h2>
         <p>${enrichment.storyText}</p>
+        <blockquote>${enrichment.dialogue}</blockquote>
+        <p class="story-closing">${enrichment.storyClosing}</p>
       </div>
     </section>
     <div class="concept-grid">${concepts.map((item, index) => `

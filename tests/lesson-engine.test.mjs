@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
 import {
   calculateLength,
@@ -14,6 +15,7 @@ import {
   COURSE_CATALOG,
   getCoursePath,
   LESSON_ENRICHMENTS,
+  createRulerMeasurement,
 } from '../dist/lesson-engine.js';
 
 test('用直尺兩端刻度的差算出物品長度', () => {
@@ -130,4 +132,42 @@ test('七個關卡都有專屬且可重播的教學動畫設定', () => {
     assert.ok(lesson.demoTitle.length >= 6);
     assert.ok(lesson.demoCaption.length >= 15);
   }
+});
+
+test('刻度 2 到 9 的鉛筆動畫端點與長度都精確一致', () => {
+  assert.deepEqual(createRulerMeasurement(2, 9, 10), {
+    start: 2,
+    end: 9,
+    max: 10,
+    length: 7,
+    startPercent: 20,
+    endPercent: 90,
+    spanPercent: 70,
+  });
+});
+
+test('積木與彩帶動畫的數量及比例使用正確數學資料', () => {
+  assert.deepEqual(LESSON_ENRICHMENTS[1].demoData, {
+    smallUnitCount: 8,
+    largeUnitCount: 4,
+    equalTotalLength: true,
+  });
+  assert.deepEqual(LESSON_ENRICHMENTS[5].demoData, {
+    firstLength: 8,
+    secondLength: 5,
+    totalLength: 13,
+  });
+});
+
+test('每一關都有角色對話和帶情感的故事收束', () => {
+  for (const lesson of LESSON_ENRICHMENTS) {
+    assert.ok(lesson.storyText.length >= 55);
+    assert.ok(lesson.dialogue.length >= 12);
+    assert.ok(lesson.storyClosing.length >= 25);
+  }
+});
+
+test('活動尺上的鉛筆尖端不會超過終點刻度', () => {
+  const styles = readFileSync(new URL('../dist/styles.css', import.meta.url), 'utf8');
+  assert.match(styles, /\.measure-object\s*\{[^}]*width:\s*calc\(var\(--length\) \* 10% - 18px\)/s);
 });
