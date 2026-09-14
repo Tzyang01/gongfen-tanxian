@@ -1,13 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
 import { SEMESTER_COURSE } from '../dist/course-data.js';
-import {
+import * as SemesterEngine from '../dist/semester-engine.js';
+
+const {
   buildVisualModel,
   canOpenSemesterLesson,
   createSemesterProgress,
   recordSemesterCompletion,
-} from '../dist/semester-engine.js';
+} = SemesterEngine;
 
 const expectedUnits = [
   ['200 以內的數', ['1-1 數到 200', '1-2 幾個百、幾個十、幾個一', '1-3 付錢']],
@@ -83,4 +86,52 @@ test('公分尺模型的物件兩端精確落在起點與終點刻度', () => {
     type: 'ruler', start: 2, end: 9, max: 10,
     length: 7, leftPercent: 20, widthPercent: 70, rightPercent: 90,
   });
+});
+
+test('一般課程至少四題，單元挑戰固定十題，並涵蓋分層練習', () => {
+  assert.equal(typeof SemesterEngine.buildPracticeSet, 'function');
+  for (const unit of SEMESTER_COURSE.units) {
+    for (const lesson of unit.lessons) {
+      const questions = SemesterEngine.buildPracticeSet(lesson, unit.lessons);
+      assert.equal(questions.length, lesson.kind === 'challenge' ? 10 : 4);
+      assert.equal(new Set(questions.map((question) => question.prompt)).size, questions.length);
+      assert.ok(new Set(questions.map((question) => question.level)).size >= 4);
+      for (const question of questions) {
+        assert.ok(question.options.length >= 2);
+        assert.equal(new Set(question.options.map(String)).size, question.options.length);
+        assert.ok(question.options.includes(question.answer));
+        assert.ok(question.explain.length >= 8);
+      }
+    }
+  }
+});
+
+test('練習題要逐題答對，完成整組後才算通過課程', () => {
+  assert.equal(typeof SemesterEngine.createPracticeSession, 'function');
+  assert.equal(typeof SemesterEngine.answerPracticeQuestion, 'function');
+  const questions = [
+    { answer: 3 },
+    { answer: '較多' },
+    { answer: 8 },
+    { answer: 12 },
+  ];
+  let session = SemesterEngine.createPracticeSession(questions);
+  assert.deepEqual(session, { current: 0, correct: 0, completed: false });
+
+  session = SemesterEngine.answerPracticeQuestion(session, questions, 4);
+  assert.deepEqual(session, { current: 0, correct: 0, completed: false, lastCorrect: false });
+
+  for (const question of questions) {
+    session = SemesterEngine.answerPracticeQuestion(session, questions, question.answer);
+  }
+  assert.deepEqual(session, { current: 3, correct: 4, completed: true, lastCorrect: true });
+});
+
+test('課程畫面顯示題數進度，並提供學生主動前往下一題的按鈕', () => {
+  const html = readFileSync(new URL('../dist/index.html', import.meta.url), 'utf8');
+  const app = readFileSync(new URL('../dist/app.js', import.meta.url), 'utf8');
+  assert.match(html, /id="practice-progress"/);
+  assert.match(html, /id="practice-next"/);
+  assert.match(app, /buildPracticeSet/);
+  assert.match(app, /answerPracticeQuestion/);
 });

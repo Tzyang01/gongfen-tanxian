@@ -17,7 +17,7 @@
         <span><strong>數學冒險島</strong><small>二年級上學期</small></span>
       </button>
       <div class="header-actions">
-        <div class="star-counter" aria-live="polite"><span aria-hidden="true">★</span><strong id="star-count">0</strong><span id="star-total">/ 37</span></div>
+        <div class="star-counter" aria-live="polite"><span aria-hidden="true">★</span><strong id="star-count">0</strong><span id="star-total">/ 40</span></div>
         <button class="icon-button" id="sound-toggle" aria-pressed="true" aria-label="關閉聲音">🔊</button>
       </div>
     </header>
@@ -99,7 +99,15 @@
               <section class="visual-panel"><div class="visual-heading"><span>看動畫想一想</span><button id="replay-button">↻ 重播</button></div><div id="math-visual" class="math-visual"></div></section>
             </div>
             <div class="tip-grid"><section class="mistake-box"><strong>小心這個陷阱</strong><p id="lesson-mistake"></p></section><section class="remember-box"><strong>把它帶走</strong><p id="lesson-remember"></p></section></div>
-            <section class="activity-panel" aria-labelledby="question-title"><p class="panel-label">換你試試看</p><h2 id="question-title"></h2><div id="question-options" class="question-options"></div><div id="feedback" class="feedback" role="status" aria-live="polite"></div></section>
+            <section class="activity-panel" aria-labelledby="question-title">
+              <div class="practice-heading"><p class="panel-label">換你試試看</p><strong id="practice-progress"></strong></div>
+              <div class="practice-track" aria-hidden="true"><i id="practice-progress-bar"></i></div>
+              <span class="question-level" id="question-level"></span>
+              <h2 id="question-title"></h2>
+              <div id="question-options" class="question-options"></div>
+              <div id="feedback" class="feedback" role="status" aria-live="polite"></div>
+              <button class="practice-next" id="practice-next" hidden>下一題 →</button>
+            </section>
           </section>
           <div class="lesson-pager"><button class="secondary-button" id="prev-button">← 上一課</button><button class="primary-button" id="next-button">下一課 →</button></div>
         </article>

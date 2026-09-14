@@ -1,7 +1,10 @@
 import { SEMESTER_COURSE } from './course-data.js';
 import {
+  answerPracticeQuestion,
+  buildPracticeSet,
   buildVisualModel,
   canOpenSemesterLesson,
+  createPracticeSession,
   recordSemesterCompletion,
   restoreSemesterProgress,
 } from './semester-engine.js';
@@ -12,6 +15,8 @@ let progress = restoreSemesterProgress(localStorage.getItem(storageKey), SEMESTE
 let currentUnitIndex = 0;
 let currentLessonIndex = 0;
 let soundOn = true;
+let currentQuestions = [];
+let practiceSession = null;
 
 const elements = {
   home: $('#home-view'), unit: $('#unit-view'), lesson: $('#lesson-view'), unitGrid: $('#unit-grid'),
@@ -76,7 +81,7 @@ function renderUnit() {
     const done = state.completed[index];
     return `<button class="lesson-map-card" data-lesson="${index}" ${open ? '' : 'disabled'}>
       <span class="lesson-status">${done ? '★' : open ? String(index + 1) : '🔒'}</span>
-      <div><small>${item.kind === 'challenge' ? '統整挑戰' : item.code}</small><h3>${item.title}</h3><p>${item.goal}</p></div>
+      <div><small>${item.kind === 'challenge' ? '統整挑戰 · 10 題' : `${item.code} · 4 題練習`}</small><h3>${item.title}</h3><p>${item.goal}</p></div>
       <b aria-hidden="true">${open ? '→' : ''}</b>
     </button>`;
   }).join('');
@@ -106,15 +111,27 @@ function renderLesson() {
   $('#lesson-steps').innerHTML = item.steps.map((step) => `<li>${step}</li>`).join('');
   $('#lesson-mistake').textContent = item.mistake;
   $('#lesson-remember').textContent = item.remember;
-  $('#question-title').textContent = item.question.prompt;
-  $('#question-options').innerHTML = item.question.options.map((option) => `<button data-answer="${String(option)}">${option}</button>`).join('');
-  elements.feedback.textContent = '';
-  elements.feedback.className = 'feedback';
+  currentQuestions = buildPracticeSet(item, unit.lessons);
+  practiceSession = createPracticeSession(currentQuestions);
+  renderPracticeQuestion();
   renderVisual(item.visual);
   renderNav();
   $('#prev-button').disabled = currentLessonIndex === 0;
   const nextOpen = currentLessonIndex < unit.lessons.length - 1 && canOpenSemesterLesson(progress, unit.id, currentLessonIndex + 1);
   $('#next-button').disabled = currentLessonIndex === unit.lessons.length - 1 || !nextOpen;
+}
+
+function renderPracticeQuestion() {
+  const question = currentQuestions[practiceSession.current];
+  const total = currentQuestions.length;
+  $('#practice-progress').textContent = `第 ${practiceSession.current + 1} 題，共 ${total} 題`;
+  $('#practice-progress-bar').style.width = `${(practiceSession.current / total) * 100}%`;
+  $('#question-level').textContent = question.level;
+  $('#question-title').textContent = question.prompt;
+  $('#question-options').innerHTML = question.options.map((option) => `<button data-answer="${String(option)}">${option}</button>`).join('');
+  $('#practice-next').hidden = true;
+  elements.feedback.textContent = '';
+  elements.feedback.className = 'feedback';
 }
 
 function renderVisual(spec) {
@@ -242,25 +259,34 @@ $('#question-options').addEventListener('click', (event) => {
   if (!button) return;
   const unit = SEMESTER_COURSE.units[currentUnitIndex];
   const item = unit.lessons[currentLessonIndex];
-  const correct = button.dataset.answer === String(item.question.answer);
+  const question = currentQuestions[practiceSession.current];
+  practiceSession = answerPracticeQuestion(practiceSession, currentQuestions, button.dataset.answer);
+  const correct = practiceSession.lastCorrect;
   [...$('#question-options').children].forEach((option) => { option.disabled = true; });
   button.classList.add(correct ? 'correct' : 'wrong');
   if (correct) {
-    progress = recordSemesterCompletion(progress, unit.id, currentLessonIndex);
-    saveProgress();
-    elements.feedback.textContent = `答對了！${item.question.explain}`;
+    elements.feedback.textContent = `答對了！${question.explain}`;
     elements.feedback.className = 'feedback success';
     tone(true);
-    renderNav();
-    updateStars();
-    const last = currentLessonIndex === unit.lessons.length - 1;
-    $('#next-button').disabled = last;
-    if (last) {
-      $('#celebration-title').textContent = `${unit.title}，任務完成！`;
-      setTimeout(() => elements.celebration.showModal(), 650);
+    $('#practice-progress-bar').style.width = `${(practiceSession.correct / currentQuestions.length) * 100}%`;
+    $('#practice-progress').textContent = `答對 ${practiceSession.correct} / ${currentQuestions.length} 題`;
+    if (practiceSession.completed) {
+      progress = recordSemesterCompletion(progress, unit.id, currentLessonIndex);
+      saveProgress();
+      renderNav();
+      updateStars();
+      const last = currentLessonIndex === unit.lessons.length - 1;
+      $('#next-button').disabled = last;
+      elements.feedback.textContent = `整組完成！${question.explain} 你把每一題都想清楚了。`;
+      if (last) {
+        $('#celebration-title').textContent = `${unit.title}，10 題總挑戰完成！`;
+        setTimeout(() => elements.celebration.showModal(), 650);
+      }
+    } else {
+      $('#practice-next').hidden = false;
     }
   } else {
-    elements.feedback.textContent = `還差一點點。${item.question.explain} 重新讀一遍三個步驟，再試一次。`;
+    elements.feedback.textContent = `還差一點點。${question.explain} 再想一次，你可以的。`;
     elements.feedback.className = 'feedback retry';
     tone(false);
     setTimeout(() => { [...$('#question-options').children].forEach((option) => { option.disabled = false; option.classList.remove('wrong'); }); }, 900);
@@ -272,6 +298,7 @@ $('#back-home').addEventListener('click', () => { renderUnitGrid(); show('home')
 $('#back-unit').addEventListener('click', () => { renderUnit(); show('unit'); });
 $('#prev-button').addEventListener('click', () => openLesson(currentLessonIndex - 1));
 $('#next-button').addEventListener('click', () => openLesson(currentLessonIndex + 1));
+$('#practice-next').addEventListener('click', renderPracticeQuestion);
 $('#replay-button').addEventListener('click', () => renderVisual(SEMESTER_COURSE.units[currentUnitIndex].lessons[currentLessonIndex].visual));
 $('#story-listen').addEventListener('click', () => { const s = SEMESTER_COURSE.units[currentUnitIndex].story; speak(`${s.title}。${s.opening}${s.dialogue}${s.closing}`); });
 $('#lesson-listen').addEventListener('click', () => { const l = SEMESTER_COURSE.units[currentUnitIndex].lessons[currentLessonIndex]; speak(`${l.title}。${l.goal}${l.storyBeat}${l.steps.join('。')}請記住：${l.remember}`); });
