@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1456a0" />
+    <meta name="description" content="適合國小二年級的圖文、語音與互動式公分學習網站。" />
+    <title>公分探險隊｜二年級數學互動學習</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">跳到主要內容</a>
+
+    <header class="site-header">
+      <button class="brand" id="home-button" aria-label="回到探險首頁">
+        <span class="brand-mark" aria-hidden="true">cm</span>
+        <span><strong>公分探險隊</strong><small>二年級數學</small></span>
+      </button>
+      <div class="header-actions">
+        <div class="star-counter" aria-live="polite"><span aria-hidden="true">★</span><strong id="star-count">0</strong><span>/ 7</span></div>
+        <button class="icon-button" id="sound-toggle" aria-pressed="true" aria-label="關閉音效">🔊</button>
+      </div>
+    </header>
+
+    <main id="main-content">
+      <section class="welcome-view" id="welcome-view">
+        <div class="hero">
+          <img src="assets/classroom-adventure.png" alt="兩位學生和松鼠一起用直尺測量鉛筆，準備展開公分探險" />
+          <div class="hero-shade" aria-hidden="true"></div>
+          <div class="hero-copy">
+            <p class="kicker">任務：找回 7 顆公分星</p>
+            <h1>量一量，<br /><em>世界有多長？</em></h1>
+            <p>跟著栗栗從比較長短開始，學會用直尺量、畫線段，還能解決生活中的長度問題。</p>
+            <button class="primary-button" id="start-button"><span>開始第 1 關</span><span aria-hidden="true">→</span></button>
+          </div>
+        </div>
+
+        <section class="mission-section" aria-labelledby="mission-title">
+          <div class="section-heading">
+            <div><p class="eyebrow">學習地圖</p><h2 id="mission-title">七站公分探險</h2></div>
+            <p>每一站先觀察、再動手。答對任務，就能收集一顆星！</p>
+          </div>
+          <div class="mission-map" id="mission-map"></div>
+        </section>
+
+        <section class="teacher-note" aria-label="學習重點">
+          <div class="note-icon" aria-hidden="true">💡</div>
+          <div><p class="eyebrow">學習祕訣</p><h2>眼睛看、手指量、嘴巴說</h2><p>每一題都可以按「聽老師說」。別急著猜，先把起點、終點和單位找出來。</p></div>
+        </section>
+      </section>
+
+      <section class="lesson-view" id="lesson-view" hidden>
+        <aside class="lesson-rail" aria-label="課程章節">
+          <p class="rail-label">探險進度</p>
+          <nav id="lesson-nav"></nav>
+          <button class="reset-button" id="reset-button">重新開始</button>
+        </aside>
+
+        <article class="lesson-stage">
+          <div class="lesson-topline">
+            <button class="text-button" id="back-home">← 學習地圖</button>
+            <span id="lesson-position">第 1 關，共 7 關</span>
+          </div>
+          <div class="lesson-card">
+            <div class="lesson-heading">
+              <div><p class="eyebrow" id="lesson-eyebrow"></p><h1 id="lesson-title"></h1><p class="lesson-goal" id="lesson-goal"></p></div>
+              <button class="listen-button" id="listen-button"><span aria-hidden="true">🔊</span> 聽老師說</button>
+            </div>
+            <div id="lesson-content"></div>
+            <section class="activity-panel" id="activity-panel" aria-labelledby="activity-title"></section>
+            <div class="feedback" id="feedback" role="status" aria-live="polite"></div>
+          </div>
+          <div class="lesson-pager">
+            <button class="secondary-button" id="prev-button">← 上一關</button>
+            <button class="primary-button" id="next-button"><span>下一關</span><span aria-hidden="true">→</span></button>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <dialog class="certificate" id="certificate">
+      <button class="dialog-close" id="dialog-close" aria-label="關閉">×</button>
+      <div class="certificate-stars" aria-hidden="true">★ ★ ★</div>
+      <p class="eyebrow">任務完成</p>
+      <h2>公分達人</h2>
+      <p>你會比較、測量、畫線，也會算長度了！</p>
+      <div class="badge" aria-hidden="true"><span>cm</span><strong>7</strong></div>
+      <button class="primary-button" id="certificate-home">回到學習地圖</button>
+    </dialog>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
