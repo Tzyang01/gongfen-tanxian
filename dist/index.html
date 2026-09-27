@@ -17,6 +17,8 @@
         <span><strong>數學冒險島</strong><small>二年級上學期</small></span>
       </button>
       <div class="header-actions">
+        <button class="profile-button" id="profile-button" aria-label="切換學習者"><span id="profile-avatar" aria-hidden="true">🦊</span><strong id="profile-name">小小探險家</strong></button>
+        <button class="parent-report-button" id="parent-report-button">家長報告</button>
         <div class="star-counter" aria-live="polite"><span aria-hidden="true">★</span><strong id="star-count">0</strong><span id="star-total">/ 40</span></div>
         <button class="icon-button" id="sound-toggle" aria-pressed="true" aria-label="關閉聲音">🔊</button>
       </div>
@@ -74,6 +76,15 @@
           <button class="listen-button" id="story-listen"><span aria-hidden="true">🔊</span> 聽故事</button>
         </section>
 
+        <section id="adaptive-entry" class="adaptive-entry" hidden aria-labelledby="adaptive-entry-title">
+          <div>
+            <p class="eyebrow">全新引導式學習</p>
+            <h2 id="adaptive-entry-title">看不懂題目也沒關係，我們一步一步來</h2>
+            <p>先聽題、找關係、擺出全體與部分，再選運算。每次約 8～10 分鐘，答錯只會得到更清楚的線索。</p>
+          </div>
+          <button class="adaptive-start" id="adaptive-start">開始修復加減應用島 →</button>
+        </section>
+
         <section class="lesson-map-section" aria-labelledby="lesson-map-title">
           <div class="section-heading compact">
             <div><p class="eyebrow">學習任務</p><h2 id="lesson-map-title">一步一步，走完這座島</h2></div>
@@ -112,6 +123,41 @@
           <div class="lesson-pager"><button class="secondary-button" id="prev-button">← 上一課</button><button class="primary-button" id="next-button">下一課 →</button></div>
         </article>
       </section>
+
+      <section id="adaptive-view" class="adaptive-view" hidden>
+        <header class="adaptive-header">
+          <button class="back-button" id="back-adaptive-unit">← 回到第 4 單元</button>
+          <p class="eyebrow">加減應用引導探險</p>
+          <h1>一次一小步，把數學故事看懂</h1>
+          <p id="adaptive-learner-label"></p>
+        </header>
+        <div class="island-restoration" id="island-restoration" aria-label="島嶼修復進度"></div>
+        <section id="adaptive-hub" class="adaptive-hub" aria-labelledby="adaptive-hub-title">
+          <h2 id="adaptive-hub-title">選一個能力開始練習</h2>
+          <p>完成兩個不同新情境，就能修復島上一個地方。</p>
+          <div id="adaptive-skill-list" class="adaptive-skill-list"></div>
+        </section>
+        <section id="adaptive-question" class="adaptive-question" hidden aria-labelledby="adaptive-prompt">
+          <div class="adaptive-topline">
+            <button class="secondary-button" id="adaptive-exit">← 換一個能力</button>
+            <strong id="adaptive-step-label">第 1 步，共 5 步</strong>
+          </div>
+          <div class="adaptive-step-track" id="adaptive-step-track" aria-hidden="true"></div>
+          <div class="adaptive-narration">
+            <span class="guide-character" aria-hidden="true">🐿️</span>
+            <div><small>松果老師慢慢說</small><p id="adaptive-narration-text"></p></div>
+            <button class="listen-button" id="adaptive-listen">🔊 再聽一次</button>
+          </div>
+          <div class="adaptive-task">
+            <span id="adaptive-kind-label" class="question-level"></span>
+            <h2 id="adaptive-prompt"></h2>
+            <div id="adaptive-model" class="adaptive-model" hidden></div>
+            <div id="adaptive-options" class="adaptive-options"></div>
+            <button class="adaptive-option adaptive-continue" id="adaptive-continue" hidden>我聽完了，繼續 →</button>
+            <div id="adaptive-feedback" class="adaptive-feedback" role="status" aria-live="polite"></div>
+          </div>
+        </section>
+      </section>
     </main>
 
     <dialog id="celebration" class="celebration">
@@ -119,6 +165,32 @@
       <div class="celebration-mark" aria-hidden="true">★</div><p class="eyebrow">單元完成</p><h2 id="celebration-title"></h2>
       <p>你沒有只記住答案，還學會觀察、說理由和檢查。這顆星，是你認真思考的證明。</p>
       <button class="primary-button" id="celebration-home">回到十個單元</button>
+    </dialog>
+
+    <dialog id="profile-dialog" class="app-dialog">
+      <button class="dialog-close" data-close-dialog="profile-dialog" aria-label="關閉">×</button>
+      <p class="eyebrow">這是誰的進度？</p><h2>選擇學習者</h2>
+      <div id="profile-list" class="profile-list"></div>
+      <form id="profile-form" class="profile-form">
+        <label>新增角色<input id="profile-nickname" maxlength="12" placeholder="輸入暱稱" required /></label>
+        <label>選頭像<select id="profile-avatar-choice"><option>🐰</option><option>🦁</option><option>🐼</option><option>🐧</option><option>🌟</option></select></label>
+        <button class="primary-button" type="submit">新增並切換</button>
+      </form>
+    </dialog>
+
+    <dialog id="adult-gate" class="app-dialog adult-gate">
+      <button class="dialog-close" data-close-dialog="adult-gate" aria-label="關閉">×</button>
+      <p class="eyebrow">大人驗證</p><h2>請問 7＋5 是多少？</h2>
+      <p>這一區是給家長看的學習摘要。</p>
+      <div class="gate-options"><button data-gate-answer="10">10</button><button data-gate-answer="12">12</button><button data-gate-answer="14">14</button></div>
+      <p id="gate-feedback" role="status" aria-live="polite"></p>
+    </dialog>
+
+    <dialog id="parent-report" class="app-dialog parent-report">
+      <button class="dialog-close" data-close-dialog="parent-report" aria-label="關閉">×</button>
+      <p class="eyebrow">簡易家長報告</p><h2 id="parent-report-title"></h2>
+      <p>只看孩子現在需要什麼，不排名、不比速度。</p>
+      <div id="parent-report-content" class="parent-report-content"></div>
     </dialog>
     <script type="module" src="app.js"></script>
   </body>
