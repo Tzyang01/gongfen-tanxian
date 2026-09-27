@@ -82,7 +82,20 @@ export function advanceGuidedStep(session, questions) {
 }
 
 export function currentGuidedStep(session, questions) {
-  return questions[session.questionIndex]?.steps?.[session.stepIndex] ?? null;
+  const question=questions[session.questionIndex];
+  const step=question?.steps?.[session.stepIndex] ?? null;
+  if(!step || step.kind!=='choice') return step;
+  const options=step.options.filter(value=>String(value)!==String(step.answer));
+  const seed=[...(question.id || String(session.questionIndex))].reduce((sum,c)=>sum+c.charCodeAt(0),0);
+  const position=(seed+session.stepIndex)%(options.length+1);
+  options.splice(position,0,step.answer);
+  return {...step,options};
+}
+
+export function completedGuidedModel(session, questions) {
+  const steps=questions[session.questionIndex]?.steps || [];
+  const index=steps.findIndex(step=>step.id==='model');
+  return index>=0 && session.stepIndex>index ? steps[index].answer : null;
 }
 
 const blankSkill = () => ({

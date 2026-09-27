@@ -1,4 +1,6 @@
-import { SEMESTER_COURSE } from './course-data.js';
+import { SEMESTER_COURSE } from './course-data.js?v=20260927-games';
+import { GAMES } from './island-games-engine.js?v=20260927-games';
+import { mountIslandGames } from './island-games.js?v=20260927-games';
 import {
   answerPracticeQuestion,
   buildPracticeSet,
@@ -8,7 +10,8 @@ import {
   createSemesterProgress,
   recordSemesterCompletion,
   restoreSemesterProgress,
-} from './semester-engine.js';
+  practiceHint,
+} from './semester-engine.js?v=20260927-games';
 import {
   addLearnerProfile,
   advanceGuidedStep,
@@ -16,11 +19,12 @@ import {
   buildParentReport,
   createGuidedSession,
   currentGuidedStep,
+  completedGuidedModel,
   recordGuidedSession,
   restoreLearnerStore,
   setActiveLearner,
-} from './adaptive-engine.js';
-import { ADAPTIVE_COURSE, getAdaptiveUnit } from './adaptive-course-data.js';
+} from './adaptive-engine.js?v=20260927-games';
+import { ADAPTIVE_COURSE, getAdaptiveUnit } from './adaptive-course-data.js?v=20260927-games';
 
 const $ = (selector) => document.querySelector(selector);
 const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (character) => ({
@@ -37,6 +41,7 @@ let currentLessonIndex = 0;
 let soundOn = true;
 let currentQuestions = [];
 let practiceSession = null;
+let practiceAttempts = 0;
 let adaptiveSkill = null;
 let adaptiveSession = null;
 let activeAdaptiveUnit = null;
@@ -65,6 +70,7 @@ function saveProgress() {
 }
 
 function show(view) {
+  $('#game-view').hidden = view !== 'game';
   elements.home.hidden = view !== 'home';
   elements.unit.hidden = view !== 'unit';
   elements.lesson.hidden = view !== 'lesson';
@@ -80,6 +86,7 @@ function updateStars() {
 }
 
 function renderUnitGrid() {
+  islandGames.renderMap();
   elements.unitGrid.innerHTML = SEMESTER_COURSE.units.map((unit) => {
     const state = unitProgress(unit);
     const percentage = Math.round((state.stars / unit.lessons.length) * 100);
@@ -95,6 +102,8 @@ function renderUnitGrid() {
 
 function renderUnit() {
   const unit = SEMESTER_COURSE.units[currentUnitIndex];
+  $('#unit-game-name').textContent = `${GAMES[currentUnitIndex].icon} ${GAMES[currentUnitIndex].title}`;
+  $('#unit-game-description').textContent = GAMES[currentUnitIndex].description;
   const state = unitProgress(unit);
   const percentage = Math.round((state.stars / unit.lessons.length) * 100);
   $('#unit-hero').style.setProperty('--unit', unit.color);
@@ -146,7 +155,7 @@ function renderLesson() {
   const unit = SEMESTER_COURSE.units[currentUnitIndex];
   const item = unit.lessons[currentLessonIndex];
   $('#lesson-position').textContent = `第 ${currentLessonIndex + 1} 課，共 ${unit.lessons.length} 課`;
-  $('#lesson-code').textContent = item.kind === 'challenge' ? `${item.code} · 統整挑戰` : item.code;
+  $('#lesson-code').textContent = item.kind === 'challenge' ? `${item.code} · 單元大挑戰` : item.code;
   $('#lesson-name').textContent = item.title;
   $('#lesson-goal').textContent = item.goal;
   $('#story-beat').textContent = item.storyBeat;
@@ -164,6 +173,7 @@ function renderLesson() {
 }
 
 function renderPracticeQuestion() {
+  practiceAttempts = 0;
   const question = currentQuestions[practiceSession.current];
   const total = currentQuestions.length;
   $('#practice-progress').textContent = `第 ${practiceSession.current + 1} 題，共 ${total} 題`;
@@ -196,7 +206,7 @@ function renderPracticeVisual(spec) {
     return;
   }
   const safe = (value) => escapeHtml(value ?? '');
-  const dots = (count, icon = '●') => Array.from({ length: Math.min(Number(count) || 0, 10) }, () => `<i>${safe(icon)}</i>`).join('');
+  const dots = (count, icon = '●') => Array.from({ length: Math.max(0, Math.min(Number(count) || 0, 200)) }, () => `<i>${safe(icon)}</i>`).join('');
   let html = '';
   switch (spec.type) {
     case 'sequence':
@@ -226,6 +236,20 @@ function renderPracticeVisual(spec) {
       html = `<div class="practice-capacity">${spec.values.map((value, index) => `<div><strong>${safe(spec.labels[index])}</strong><i><u style="height:${(value / max) * 100}%"></u></i><span>${safe(value)} 杯</span></div>`).join('')}</div>`;
       break;
     }
+    case 'measure-bars': {
+      const max=Math.max(...spec.lengths);
+      html=`<div class="practice-measure-bars">${spec.lengths.map((length,i)=>`<div><strong>${safe(spec.labels[i])}</strong><span style="width:${length/max*100}%">${Array.from({length},()=>'<i></i>').join('')}</span></div>`).join('')}</div>`;
+      break;
+    }
+    case 'unit-strips':
+      html=`<div class="practice-unit-strips"><p>同一條彩帶，換兩種積木量</p>${spec.counts.map((count,i)=>`<strong>${safe(spec.labels[i])}</strong><div>${Array.from({length:count},()=>'<i></i>').join('')}</div>`).join('')}</div>`;
+      break;
+    case 'ruler-pair':
+      html=`<div class="practice-ruler-pair">${spec.rulers.map(r=>`<strong>${safe(r.label)}</strong><div class="practice-ruler"><div class="practice-ruler-segment" style="--left:${r.start/spec.max*100}%;--width:${(r.end-r.start)/spec.max*100}%"></div>${Array.from({length:spec.max+1},(_,i)=>`<span><i></i><b>${i}</b></span>`).join('')}</div>`).join('')}</div>`;
+      break;
+    case 'journey':
+      html=`<div class="practice-journey"><strong>開始 ${safe(spec.start)}</strong>${spec.steps.map((step,i)=>`<span>第 ${i+1} 步：${step>=0?'增加':'減少'} ${Math.abs(step)}<b>→ ？</b></span>`).join('')}</div>`;
+      break;
     case 'clock': {
       const hourAngle = ((spec.hour % 12) + spec.minute / 60) * 30;
       const minuteAngle = spec.minute * 6;
@@ -354,7 +378,7 @@ function tone(success) {
 }
 
 const skillStateLabels = {
-  not_started: '還沒開始', guided: '需要引導', practicing: '再練一次', mastered: '已精熟', needs_review: '需要複習',
+  not_started: '還沒開始', guided: '一起練習', practicing: '再練一次', mastered: '自己做到了', needs_review: '再想一想',
 };
 
 function saveLearnerStore() {
@@ -377,7 +401,7 @@ function renderAdaptiveHub(message = '') {
     const restored = profile.restoredScenes.includes(skill.id);
     return `<div class="island-scene ${restored ? 'restored' : ''}"><span aria-hidden="true">${restored ? '✨' : '🌫️'}</span><strong>${skill.scene}</strong><small>${restored ? '已修復' : '等你點亮'}</small></div>`;
   }).join('');
-  const title = message || '選一個能力開始練習';
+  const title = message || '選一個任務，開始練習';
   $('#adaptive-hub-title').textContent = title;
   $('#adaptive-skill-list').innerHTML = activeAdaptiveUnit.skills.map((skill) => {
     const state = profile.skills[skill.id]?.state || 'not_started';
@@ -423,9 +447,9 @@ function renderAdaptiveStep(feedbackText = '', feedbackKind = '') {
   $('#adaptive-narration-text').textContent = question.narration;
   $('#adaptive-kind-label').textContent = stepNames[step.id];
   $('#adaptive-prompt').textContent = step.prompt;
-  const model = question.steps.find((item) => item.id === 'model')?.answer;
-  $('#adaptive-model').hidden = adaptiveSession.stepIndex < 2;
-  $('#adaptive-model').textContent = model || '';
+  const model = completedGuidedModel(adaptiveSession, adaptiveSkill.questions);
+  $('#adaptive-model').hidden = model === null;
+  $('#adaptive-model').textContent = model === null ? '' : `你剛剛找到：${model}`;
   $('#adaptive-options').innerHTML = step.kind === 'listen' ? '' : step.options.map((option, index) =>
     `<button class="adaptive-option" data-adaptive-option="${index}">${option}</button>`).join('');
   $('#adaptive-continue').hidden = step.kind !== 'listen';
@@ -479,7 +503,7 @@ function renderParentReport() {
   const started = allSkills.filter((skill) => (profile.skills[skill.id]?.state || 'not_started') !== 'not_started').length;
   $('#parent-report-title').textContent = `${profile.avatar} ${profile.nickname}的二上數學進度`;
   $('#parent-report-summary').textContent = `已開始 ${started} / ${allSkills.length} 項能力，其中 ${mastered} 項已精熟。`;
-  $('#parent-report-content').innerHTML = ADAPTIVE_COURSE.units.map((unit, index) => {
+  $('#parent-report-content').innerHTML = islandGames.reportHTML() + ADAPTIVE_COURSE.units.map((unit, index) => {
     const report = buildParentReport(profile, unit.skills);
     const unitStarted = report.filter((item) => item.state !== 'not_started').length;
     return `<details class="parent-report-unit" ${unitStarted > 0 || index === 0 ? 'open' : ''}>
@@ -551,7 +575,7 @@ function submitPracticeAnswer(answer, sourceElement = null) {
       updateStars();
       const last = currentLessonIndex === unit.lessons.length - 1;
       $('#next-button').disabled = last;
-      elements.feedback.textContent = `整組完成！${question.explain} 你把每一題都想清楚了。`;
+      elements.feedback.textContent = `整組完成！${question.explain} 每一題都練習過了，謝謝你認真試一試。`;
       if (last) {
         $('#celebration-title').textContent = `${unit.title}，15 題總挑戰完成！`;
         setTimeout(() => elements.celebration.showModal(), 650);
@@ -560,7 +584,8 @@ function submitPracticeAnswer(answer, sourceElement = null) {
       $('#practice-next').hidden = false;
     }
   } else {
-    elements.feedback.textContent = `還差一點點。${question.explain} 再想一次，你可以的。`;
+    practiceAttempts += 1;
+    elements.feedback.textContent = `我們再試試看。${practiceHint(question, practiceAttempts)}`;
     elements.feedback.className = 'feedback retry';
     tone(false);
     setTimeout(() => {
@@ -600,6 +625,10 @@ $('#practice-next').addEventListener('click', renderPracticeQuestion);
 $('#replay-button').addEventListener('click', () => renderVisual(SEMESTER_COURSE.units[currentUnitIndex].lessons[currentLessonIndex].visual));
 $('#story-listen').addEventListener('click', () => { const s = SEMESTER_COURSE.units[currentUnitIndex].story; speak(`${s.title}。${s.opening}${s.dialogue}${s.closing}`); });
 $('#lesson-listen').addEventListener('click', () => { const l = SEMESTER_COURSE.units[currentUnitIndex].lessons[currentLessonIndex]; speak(`${l.title}。${l.goal}${l.storyBeat}${l.steps.join('。')}請記住：${l.remember}`); });
+$('#question-listen').addEventListener('click', () => {
+  const question = currentQuestions[practiceSession.current];
+  speak(`${question.prompt}${question.responseType === 'input' ? '。把答案填進空格。' : `。選項有：${question.options.join('。')}`}${elements.feedback.textContent ? `。${elements.feedback.textContent}` : ''}`);
+});
 elements.sound.addEventListener('click', () => {
   soundOn = !soundOn;
   elements.sound.textContent = soundOn ? '🔊' : '🔇';
@@ -652,4 +681,7 @@ document.querySelectorAll('[data-close-dialog]').forEach((button) => button.addE
   $(`#${button.dataset.closeDialog}`).close();
 }));
 
+const islandGames = mountIslandGames({ show, profileId: () => learnerStore.activeProfileId, speak, openUnit });
+$('#unit-game-start').addEventListener('click', () => islandGames.open(currentUnitIndex + 1));
+$('#playground-jump').addEventListener('click', () => $('#playground').scrollIntoView({ behavior: 'smooth' }));
 renderUnitGrid();

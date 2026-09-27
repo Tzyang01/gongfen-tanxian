@@ -3,6 +3,7 @@
   --paper: #fffdf8; --line: #dce6ec; --shadow: 0 20px 50px rgba(30, 66, 103, .14);
   font-family: "PingFang TC", "Noto Sans TC", system-ui, sans-serif; color: var(--ink); background: #edf6f8;
 }
+.practice-measure-bars,.practice-unit-strips,.practice-ruler-pair{width:min(100%,600px)}.practice-measure-bars>div{margin:1rem 0}.practice-measure-bars strong,.practice-unit-strips strong{display:block;margin:.5rem 0}.practice-measure-bars span,.practice-unit-strips>div{display:flex;height:36px}.practice-measure-bars i,.practice-unit-strips i{flex:1;background:#ffd882;border:1px solid #a17f3e}.practice-unit-strips>div:last-child i{background:#a1d9c8;border-color:#538575}.practice-ruler-pair .practice-ruler{margin:2rem auto 2.5rem;width:100%}.practice-journey{display:flex;flex-wrap:wrap;gap:1rem;align-items:center;justify-content:center}.practice-journey>span,.practice-journey>strong{padding:1rem;border:2px solid #bad2c6;border-radius:15px;background:#f2f8ed}.practice-journey b{display:block;margin-top:.5rem}
 * { box-sizing: border-box; }
 html { scroll-behavior:smooth; }
 body { margin:0; min-width:320px; background:radial-gradient(circle at 7% 13%,#fff0ac 0 80px,transparent 81px),radial-gradient(circle at 96% 38%,#d8f3ec 0 150px,transparent 151px),#edf6f8; }
