@@ -5,14 +5,14 @@ const shapes = ['紅色地墊', '藍色紙片', '綠色桌墊', '黃色拼圖', 
 
 const overlap = createSkill({
   unitId, id: 'overlap', title: '對齊重疊直接比較面', icon: '🖼️', scene: '鋪好重疊地墊',
-  goal: '把兩個可移動的面對齊重疊，以是否露在外面判斷大小。', recommendation: '用兩張不同大小的紙對齊一個角重疊，說明看到的結果。',
+  goal: '把兩個面疊起來，看能不能完全蓋住另一個面。', recommendation: '用兩張不同大小的紙對齊一個角重疊，說明看到的結果。',
   rows: [[12, 8], [9, 14], [15, 11], [10, 10], [18, 13], [7, 12], [16, 9], [14, 14]],
   build: ([first, second], index) => {
     const result = first > second ? shapes[index] : first < second ? '比較面' : '兩個面一樣大';
     return {
-      narration: `${shapes[index]}與比較面可以移動，重疊後對應大小是 ${first} 和 ${second}，請比較兩個面。`,
+      narration: `把${shapes[index]}和另一個面（比較面）疊起來。${first > second ? `${shapes[index]}完全蓋住比較面，還多出一塊。` : first < second ? `比較面完全蓋住${shapes[index]}，還多出一塊。` : '兩個面剛好完全蓋住，沒有多出來。'}`,
       concept: { prompt: '可移動的兩個面最適合先用什麼方法？', answer: '對齊後重疊', options: ['只比一條邊', '只看顏色'], errorTag: 'area-overlap-method' },
-      model: { prompt: '重疊時為什麼要先對齊角或邊？', answer: '才能公平看出哪個面露在外面', options: ['讓圖形變小', '讓顏色變一樣'], errorTag: 'area-alignment' },
+      model: { prompt: '重疊時為什麼要先對齊角或邊？', answer: '看能不能完全蓋住另一個面', options: ['讓圖形變小', '讓顏色變一樣'], errorTag: 'area-alignment' },
       method: { prompt: 'A 面完全蓋住 B 面且還有露出，哪個較大？', answer: 'A 面', options: ['B 面', '一定一樣大'], errorTag: 'area-overlap-interpretation' },
       answer: { prompt: `根據重疊結果，${shapes[index]}和比較面哪個較大？`, answer: result, options: [result === shapes[index] ? '比較面' : shapes[index], result === '兩個面一樣大' ? '無法比較' : '兩個面一樣大'], errorTag: 'area-comparison' },
     };

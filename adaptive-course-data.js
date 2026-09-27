@@ -7,7 +7,7 @@ import { UNIT6_ADAPTIVE } from './adaptive/unit-6.js';
 import { UNIT7_ADAPTIVE } from './adaptive/unit-7.js';
 import { UNIT8_ADAPTIVE } from './adaptive/unit-8.js';
 import { UNIT9_ADAPTIVE } from './adaptive/unit-9.js';
-import { UNIT10_ADAPTIVE } from './adaptive/unit-10.js';
+import { UNIT10_ADAPTIVE } from './adaptive/unit-10.js?v=20260927-games';
 
 const units = [
   UNIT1_ADAPTIVE,
@@ -28,4 +28,3 @@ export const ADAPTIVE_COURSE = {
 };
 
 export const getAdaptiveUnit = (unitId) => units.find((unit) => unit.unitId === unitId) || null;
-

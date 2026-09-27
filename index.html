@@ -7,7 +7,8 @@
     <meta name="description" content="適合 7～8 歲兒童的二年級上學期數學圖文、語音與動畫互動課程。" />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23ffd64a'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-size='32'%3E✦%3C/text%3E%3C/svg%3E" />
     <title>二上數學冒險島｜互動學習</title>
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles.css?v=20260927-games" />
+    <link rel="stylesheet" href="island-games.css?v=20260927-games" />
   </head>
   <body>
     <a class="skip-link" href="#main-content">跳到主要內容</a>
@@ -28,9 +29,11 @@
       <section id="home-view" class="home-view">
         <section class="hero-grid" aria-labelledby="home-title">
           <div class="hero-copy">
-            <p class="kicker">HANLIN-ALIGNED LEARNING ADVENTURE</p>
-            <h1 id="home-title">今天，想去哪一座<br /><em>數學小島</em>探險？</h1>
-            <p>每個單元都有一個有溫度的故事、一段看得懂的動畫，還有可以親手作答的小任務。慢慢想，也能走得很遠。</p>
+            <p class="kicker">給每一個願意試試看的小小探險家</p>
+            <h1 id="home-title">用小小的手，<br />打造<em>數學冒險島</em></h1>
+            <p>開小店、搭巴士、點亮螢火蟲！十個單元、十種玩法，跟著松果老師，一起把數學玩懂。</p>
+            <button class="play-hero-button" id="playground-jump">出發！選一個遊戲 ↘</button>
+            <p class="play-hero-note">不用比快 · 隨時有提示 · 每一次嘗試都算數</p>
             <div class="course-path" aria-label="目前課程分類">
               <span><small>年紀</small><strong>7～8 歲</strong></span><b aria-hidden="true">›</b>
               <span><small>課程分類</small><strong>數學</strong></span><b aria-hidden="true">›</b>
@@ -40,10 +43,15 @@
           </div>
           <figure class="hero-art">
             <img src="assets/number-market-story.jpg" alt="兩位學生與松鼠在明亮教室的森林小舖進行數學探索" />
-            <figcaption>情境圖負責說故事；數字、刻度和答案都由互動圖精確呈現。</figcaption>
+            <figcaption>和小晴、阿哲一起玩。看不懂也沒關係，松果老師會陪你。</figcaption>
           </figure>
         </section>
 
+        <section id="playground" class="playground" aria-labelledby="playground-title">
+          <div class="section-heading"><div><p class="eyebrow">用數學，讓森林熱鬧起來</p><h2 id="playground-title">今天想玩哪一個？</h2></div><p id="playground-count"></p></div>
+          <p class="playground-intro">點一個地方開始探險。每次三個小任務，可以聽題目、找提示，慢慢完成。</p>
+          <div id="playground-grid" class="playground-grid"></div>
+        </section>
         <section class="unit-section" aria-labelledby="unit-title">
           <div class="section-heading">
             <div><p class="eyebrow">選擇單元</p><h2 id="unit-title">十座小島，從好奇心出發</h2></div>
@@ -76,6 +84,7 @@
           <button class="listen-button" id="story-listen"><span aria-hidden="true">🔊</span> 聽故事</button>
         </section>
 
+        <section class="play-unit-entry"><div><p class="eyebrow">這個單元的互動遊戲</p><h2 id="unit-game-name"></h2><p id="unit-game-description"></p></div><button id="unit-game-start" class="play-hero-button">動手玩一玩 →</button></section>
         <section id="adaptive-entry" class="adaptive-entry" hidden aria-labelledby="adaptive-entry-title">
           <div>
             <p class="eyebrow">全新引導式學習</p>
@@ -115,6 +124,7 @@
               <div class="practice-track" aria-hidden="true"><i id="practice-progress-bar"></i></div>
               <span class="question-level" id="question-level"></span>
               <h2 id="question-title"></h2>
+              <button class="listen-button small" id="question-listen" type="button">🔊 聽這一題</button>
               <div id="question-visual" class="question-visual" hidden aria-label="題目圖像"></div>
               <form id="question-input-form" class="question-input-form" hidden>
                 <label for="question-input">把答案填進空格</label>
@@ -141,13 +151,13 @@
         </header>
         <div class="island-restoration" id="island-restoration" aria-label="島嶼修復進度"></div>
         <section id="adaptive-hub" class="adaptive-hub" aria-labelledby="adaptive-hub-title">
-          <h2 id="adaptive-hub-title">選一個能力開始練習</h2>
+          <h2 id="adaptive-hub-title">選一個任務，開始練習</h2>
           <p>完成兩個不同新情境，就能修復島上一個地方。</p>
           <div id="adaptive-skill-list" class="adaptive-skill-list"></div>
         </section>
         <section id="adaptive-question" class="adaptive-question" hidden aria-labelledby="adaptive-prompt">
           <div class="adaptive-topline">
-            <button class="secondary-button" id="adaptive-exit">← 換一個能力</button>
+            <button class="secondary-button" id="adaptive-exit">← 換一個任務</button>
             <strong id="adaptive-step-label">第 1 步，共 5 步</strong>
           </div>
           <div class="adaptive-step-track" id="adaptive-step-track" aria-hidden="true"></div>
@@ -166,12 +176,13 @@
           </div>
         </section>
       </section>
+      <section id="game-view" class="game-view" hidden aria-label="數學遊戲"></section>
     </main>
 
     <dialog id="celebration" class="celebration">
       <button class="dialog-close" id="dialog-close" aria-label="關閉">×</button>
       <div class="celebration-mark" aria-hidden="true">★</div><p class="eyebrow">單元完成</p><h2 id="celebration-title"></h2>
-      <p>你沒有只記住答案，還學會觀察、說理由和檢查。這顆星，是你認真思考的證明。</p>
+      <p>你願意一次一次試，完成了這些題目！休息一下，再來找松果老師玩吧。</p>
       <button class="primary-button" id="celebration-home">回到十個單元</button>
     </dialog>
 
@@ -201,6 +212,6 @@
       <p id="parent-report-summary" class="parent-report-summary"></p>
       <div id="parent-report-content" class="parent-report-content"></div>
     </dialog>
-    <script type="module" src="app.js"></script>
+    <script type="module" src="app.js?v=20260927-games"></script>
   </body>
 </html>

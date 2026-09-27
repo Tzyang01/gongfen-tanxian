@@ -188,7 +188,7 @@ function practiceVariants(lesson) {
       return [
         practiceQuestion(levels[0], `用同樣方格測量，${visual.labels[0]}有 ${visual.areas[0]} 格、${visual.labels[1]}有 ${visual.areas[1]} 格，哪個面較大？`, visual.labels[largerIndex], `相同單位下，方格較多的面比較大。`, visual.labels),
         practiceQuestion(levels[1], `兩個面相差幾個相同方格？`, Math.abs(visual.areas[0] - visual.areas[1]), `較多格減較少格，相差 ${Math.abs(visual.areas[0] - visual.areas[1])} 格。`),
-        practiceQuestion(levels[2], `直接比較面的大小，可以使用哪個方法？`, '把兩個面重疊', `重疊後觀察哪一個面露在外面，就能直接比較。`, ['把兩個面重疊', '只看一條邊', '只看顏色']),
+        practiceQuestion(levels[2], `直接比較面的大小，可以使用哪個方法？`, '把兩個面重疊', `把兩個面疊起來。能完全蓋住另一個面，還多出一塊的面，比較大。`, ['把兩個面重疊', '只看一條邊', '只看顏色']),
       ];
     }
     case 'area':
@@ -308,17 +308,32 @@ function visualPracticeVariants(lesson) {
         visualQuestion('驗算', '哪一個式子可以檢查全體和部分？', `${first}＋${second}＝${visual.total}`, '兩個部分相加要回到全體。', { type: 'groups', groups: 2, counts: [first, second], total: visual.total, icon: '●' }, 'choice', [`${first}＋${second}＝${visual.total}`, `${visual.total}＋${first}＝${second}`, `${first}－${second}＝${visual.total}`]),
       ];
     }
-    case 'compare-bars':
-    case 'units':
-    case 'ruler': {
-      const first = visual.type === 'compare-bars' ? visual.lengths[0] : visual.type === 'units' ? visual.smallCount : visual.length;
-      const second = visual.type === 'compare-bars' ? visual.lengths[1] : visual.type === 'units' ? visual.largeCount : Math.max(0, visual.length - 1);
-      const ruler = visual.type === 'ruler'
-        ? { type: 'ruler', start: visual.start, end: visual.end, max: visual.max }
-        : { type: 'ruler', start: 0, end: Math.max(first, second), max: Math.max(10, first, second) };
+    case 'compare-bars': {
+      const [first,second]=visual.lengths;
+      const model={type:'measure-bars',lengths:[first,second],labels:['甲','乙']};
       return [
-        visualQuestion('測量', '看圖算出較長的長度或單位數。', Math.max(first, second), `較長的是 ${Math.max(first, second)}。`, ruler),
-        visualQuestion('填空', '兩個長度或單位數相差多少？', Math.abs(first - second), `大數減小數，相差 ${Math.abs(first - second)}。`, ruler),
+        visualQuestion('測量','甲有幾格長？',first,`甲從同一起點排了 ${first} 格。`,model),
+        visualQuestion('填空','甲和乙相差幾格？',Math.abs(first-second),`用較多的格數減較少的格數，相差 ${Math.abs(first-second)} 格。`,model),
+        visualQuestion('圖像','比較長短，要先怎麼放？','起點對齊','兩個起點對齊，才能看出哪個比較長。',model,'choice',['起點對齊','只把終點對齊','隨便放']),
+        visualQuestion('易錯','每個小格子要怎樣？','一樣長','用一樣長的小格子，才能公平地比長短。',model,'choice',['一樣長','一個大一個小','互相疊起來']),
+      ];
+    }
+    case 'units': {
+      const model={type:'unit-strips',counts:[visual.smallCount,visual.largeCount],labels:['小積木','大積木']};
+      return [
+        visualQuestion('測量','量這條彩帶，用了幾個小積木？',visual.smallCount,`每個小積木一樣長，排了 ${visual.smallCount} 個。`,model),
+        visualQuestion('填空','同一條彩帶，用了幾個大積木？',visual.largeCount,`每個大積木一樣長，排了 ${visual.largeCount} 個。`,model),
+        visualQuestion('圖像','為什麼大積木用得比較少？','每個大積木比較長','彩帶一樣長，每個積木較長，就用得較少。',model,'choice',['每個大積木比較長','彩帶變短了','小積木比較長']),
+        visualQuestion('易錯','積木要怎麼排，才量得準？','一個接一個，不留空隙','積木要首尾相接，不能重疊，也不能留空隙。',model,'choice',['一個接一個，不留空隙','中間留空隙','疊在一起']),
+      ];
+    }
+    case 'ruler': {
+      const ruler={type:'ruler',start:visual.start,end:visual.end,max:visual.max};
+      const secondLength=visual.length+2;
+      const pair={type:'ruler-pair',max:Math.max(visual.max,visual.end+2),rulers:[{start:visual.start,end:visual.end,label:'甲'},{start:visual.start,end:visual.start+secondLength,label:'乙'}]};
+      return [
+        visualQuestion('測量', '圖中的彩帶長幾公分？', visual.length, `${visual.end}－${visual.start}＝${visual.length} 公分。`, ruler),
+        visualQuestion('填空', '甲、乙兩條彩帶相差幾公分？', 2, `甲長 ${visual.length} 公分，乙長 ${secondLength} 公分，相差 2 公分。`, pair),
         visualQuestion('圖像', '測量時要先確認什麼？', '起點和終點', '先找到起點與終點，再計算中間距離。', ruler, 'choice', ['起點和終點', '只看終點', '只看物品顏色']),
         visualQuestion('易錯', '物品沒有從 0 開始時，怎麼求長度？', '終點刻度－起點刻度', '長度是兩端刻度之間的差。', ruler, 'choice', ['終點刻度－起點刻度', '終點刻度＋起點刻度', '只讀終點刻度']),
       ];
@@ -337,7 +352,7 @@ function visualPracticeVariants(lesson) {
     case 'two-step': {
       const first = visual.values[1];
       const result = visual.values[2];
-      const model = { type: 'vertical', a: visual.start, b: visual.steps[0], operator: visual.steps[0] >= 0 ? '+' : '－', trail: visual.values };
+      const model = { type: 'journey', start: visual.start, steps: visual.steps };
       return [
         visualQuestion('填空', '故事的第一步完成後是多少？', first, `第一步後是 ${first}。`, model),
         visualQuestion('圖像', '兩步全部完成後是多少？', result, `依故事順序完成後是 ${result}。`, model),
@@ -395,6 +410,7 @@ function visualPracticeVariants(lesson) {
 export function buildPracticeSet(lesson, unitLessons = []) {
   const enrichExplanation = (question) => ({
     ...question,
+    concept: question.concept || lesson.visual.type,
     responseType: question.responseType || 'choice',
     visual: question.visual || null,
     explain: question.explain.length >= 8
@@ -443,6 +459,29 @@ export function buildPracticeSet(lesson, unitLessons = []) {
 
 export function createPracticeSession(questions) {
   return { current: 0, correct: 0, completed: questions.length === 0 };
+}
+
+export function practiceHint(question, attempts=1) {
+  if(attempts>=3) return question.explain;
+  const hints={
+    numberline:['看看要往前數，還是往後數。','用手指指著數字，一個一個數；遇到 9 要留意下一位。'],
+    'place-value':['先找百位，再找十位和個位。','十位上的一個 1 表示 10；百位上的一個 1 表示 100。'],
+    money:['先看看每張紙鈔、每個硬幣值多少元。','百元先算，再把十元和一元加上去。'],
+    arithmetic:['先看是加法還是減法，再把個位和十位對好。','個位滿十要合成一個十；不夠減時，把一個十拆開。'],
+    comparison:['先看十位，十位相同再看個位。','大開口朝向比較大的數；兩邊一樣多就用等號。'],
+    'part-whole':['先找出全部是多少，再看知道哪一部分。','找全部，把兩部分加起來；找少的一部分，用全部減另一部分。'],
+    ruler:['先找彩帶的起點和終點。','用終點刻度減起點刻度。不是從 0 開始時，要特別留意。'],
+    'compare-bars':['先看看兩邊的起點有沒有對齊。','從相同起點數格子；比較多的減比較少的，就是相差幾格。'],
+    units:['看看積木有沒有一個接一個。','量同樣長的彩帶，大積木會用得比較少。'],
+    capacity:['先確認兩邊用的是一樣大的杯子。','都裝滿後，用的杯數多，就裝得多。相差幾杯可以用減法。'],
+    'two-step':['先做第一步，把算出來的數記下來。','第二步要從第一步的答案接著算；增加用加法，減少用減法。'],
+    groups:['看看每組有幾個，再數有幾組。','每組一樣多，可以一組一組加，也能寫成乘法。'],
+    clock:['先分清楚長針和短針。','長針走一大格是 5 分鐘；短針走到哪兩個數字之間呢？'],
+    timeline:['先找開始時間，再找結束時間。','從開始往後數；分針走一大格是 5 分鐘。'],
+    'area-compare':['要比的是整個面，不是只有一條邊。','能完全蓋住另一個面、而且還有多出來的，面才比較大。'],
+    area:['先看看每個方格是不是一樣大。','一排一排數，不要重複，也不要漏掉。'],
+  };
+  return (hints[question.concept] || ['先讀一次題目，找出它要問什麼。','看看圖，再把每個數字和題目中的物品對起來。'])[Math.max(0,attempts-1)];
 }
 
 export function answerPracticeQuestion(session, questions, choice) {
