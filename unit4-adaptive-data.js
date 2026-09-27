@@ -78,6 +78,7 @@ const inverseCheck = makeBank('inverse-check', [
 export const UNIT4_ADAPTIVE = {
   unitId: 'unit-4', title: '加減應用引導探險',
   intro: '每次只做一個小步驟，慢慢把故事變成看得懂的數學關係。',
+  stepLabels: { listen: '聽題', relationship: '找關係', model: '擺模型', operation: '選運算', answer: '選答案' },
   skills: [
     { id: 'part-whole', title: '找到全體與部分', icon: '🧩', scene: '點亮彩帶橋', goal: '先找全體與部分，不被題目裡的單一關鍵字誤導。', recommendation: '用全體—部分圖再練習一題。', questions: partWhole },
     { id: 'choose-operation', title: '選擇加法或減法', icon: '🧭', scene: '修復森林指示牌', goal: '依照未知量選運算，而不是猜關鍵字。', recommendation: '先說出「我要找全體或部分」再選運算。', questions: chooseOperation },

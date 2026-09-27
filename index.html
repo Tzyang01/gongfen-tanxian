@@ -80,9 +80,9 @@
           <div>
             <p class="eyebrow">全新引導式學習</p>
             <h2 id="adaptive-entry-title">看不懂題目也沒關係，我們一步一步來</h2>
-            <p>先聽題、找關係、擺出全體與部分，再選運算。每次約 8～10 分鐘，答錯只會得到更清楚的線索。</p>
+            <p id="adaptive-entry-description">先聽題、看關鍵、擺模型，再選方法與答案。每次約 8～10 分鐘，答錯只會得到更清楚的線索。</p>
           </div>
-          <button class="adaptive-start" id="adaptive-start">開始修復加減應用島 →</button>
+          <button class="adaptive-start" id="adaptive-start">開始這個單元的引導練習 →</button>
         </section>
 
         <section class="lesson-map-section" aria-labelledby="lesson-map-title">
@@ -126,9 +126,9 @@
 
       <section id="adaptive-view" class="adaptive-view" hidden>
         <header class="adaptive-header">
-          <button class="back-button" id="back-adaptive-unit">← 回到第 4 單元</button>
-          <p class="eyebrow">加減應用引導探險</p>
-          <h1>一次一小步，把數學故事看懂</h1>
+          <button class="back-button" id="back-adaptive-unit">← 回到本單元</button>
+          <p class="eyebrow" id="adaptive-unit-label">引導探險</p>
+          <h1 id="adaptive-title">一次一小步，把數學看懂</h1>
           <p id="adaptive-learner-label"></p>
         </header>
         <div class="island-restoration" id="island-restoration" aria-label="島嶼修復進度"></div>
@@ -190,6 +190,7 @@
       <button class="dialog-close" data-close-dialog="parent-report" aria-label="關閉">×</button>
       <p class="eyebrow">簡易家長報告</p><h2 id="parent-report-title"></h2>
       <p>只看孩子現在需要什麼，不排名、不比速度。</p>
+      <p id="parent-report-summary" class="parent-report-summary"></p>
       <div id="parent-report-content" class="parent-report-content"></div>
     </dialog>
     <script type="module" src="app.js"></script>
