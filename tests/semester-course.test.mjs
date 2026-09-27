@@ -88,22 +88,45 @@ test('公分尺模型的物件兩端精確落在起點與終點刻度', () => {
   });
 });
 
-test('一般課程至少四題，單元挑戰固定十題，並涵蓋分層練習', () => {
+test('一般課程固定八題，單元挑戰固定十五題，並混合輸入與圖像題', () => {
   assert.equal(typeof SemesterEngine.buildPracticeSet, 'function');
   for (const unit of SEMESTER_COURSE.units) {
     for (const lesson of unit.lessons) {
       const questions = SemesterEngine.buildPracticeSet(lesson, unit.lessons);
-      assert.equal(questions.length, lesson.kind === 'challenge' ? 10 : 4);
+      assert.equal(questions.length, lesson.kind === 'challenge' ? 15 : 8);
       assert.equal(new Set(questions.map((question) => question.prompt)).size, questions.length);
       assert.ok(new Set(questions.map((question) => question.level)).size >= 4);
+      assert.ok(questions.every((question) => ['choice', 'input'].includes(question.responseType)));
+      assert.ok(questions.filter((question) => question.visual).length >= 2);
+      if (lesson.kind !== 'challenge') {
+        assert.ok(questions.filter((question) => question.responseType === 'input').length >= 2);
+      }
       for (const question of questions) {
-        assert.ok(question.options.length >= 2);
-        assert.equal(new Set(question.options.map(String)).size, question.options.length);
-        assert.ok(question.options.includes(question.answer));
+        if (question.responseType === 'choice') {
+          assert.ok(question.options.length >= 2);
+          assert.equal(new Set(question.options.map(String)).size, question.options.length);
+          assert.ok(question.options.includes(question.answer));
+        }
         assert.ok(question.explain.length >= 8);
       }
     }
   }
+});
+
+test('圖像題覆蓋照片參考的主要數學呈現方式', () => {
+  const visualTypes = new Set(SEMESTER_COURSE.units.flatMap((unit) => unit.lessons)
+    .flatMap((lesson) => SemesterEngine.buildPracticeSet(lesson).map((question) => question.visual?.type))
+    .filter(Boolean));
+  for (const type of ['sequence', 'place-value', 'vertical', 'groups', 'ruler', 'capacity', 'clock', 'timeline', 'area-grid']) {
+    assert.ok(visualTypes.has(type), `缺少 ${type} 圖像題`);
+  }
+});
+
+test('輸入作答接受全形數字與多餘空白', () => {
+  assert.equal(typeof SemesterEngine.normalizePracticeAnswer, 'function');
+  assert.equal(SemesterEngine.normalizePracticeAnswer('１２３ '), '123');
+  assert.equal(SemesterEngine.normalizePracticeAnswer('  45  '), '45');
+  assert.equal(SemesterEngine.normalizePracticeAnswer('３ 時 ０５ 分'), '3 時 05 分');
 });
 
 test('練習題要逐題答對，完成整組後才算通過課程', () => {
@@ -132,6 +155,11 @@ test('課程畫面顯示題數進度，並提供學生主動前往下一題的�
   const app = readFileSync(new URL('../dist/app.js', import.meta.url), 'utf8');
   assert.match(html, /id="practice-progress"/);
   assert.match(html, /id="practice-next"/);
+  assert.match(html, /id="question-visual"/);
+  assert.match(html, /id="question-input"/);
+  assert.match(html, /id="question-submit"/);
   assert.match(app, /buildPracticeSet/);
   assert.match(app, /answerPracticeQuestion/);
+  assert.match(app, /submitPracticeAnswer/);
+  assert.match(app, /renderPracticeVisual/);
 });

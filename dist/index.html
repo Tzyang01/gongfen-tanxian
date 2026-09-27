@@ -115,6 +115,14 @@
               <div class="practice-track" aria-hidden="true"><i id="practice-progress-bar"></i></div>
               <span class="question-level" id="question-level"></span>
               <h2 id="question-title"></h2>
+              <div id="question-visual" class="question-visual" hidden aria-label="題目圖像"></div>
+              <form id="question-input-form" class="question-input-form" hidden>
+                <label for="question-input">把答案填進空格</label>
+                <div>
+                  <input id="question-input" inputmode="numeric" autocomplete="off" aria-describedby="feedback" />
+                  <button id="question-submit" type="submit">送出答案</button>
+                </div>
+              </form>
               <div id="question-options" class="question-options"></div>
               <div id="feedback" class="feedback" role="status" aria-live="polite"></div>
               <button class="practice-next" id="practice-next" hidden>下一題 →</button>
