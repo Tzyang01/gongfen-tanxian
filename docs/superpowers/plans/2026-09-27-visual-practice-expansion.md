@@ -46,5 +46,5 @@
 - [x] 檢查 10 個單元每個一般課程的 8 題題型分佈，並確認每個總挑戰 15 題。
 - [x] 使用 Playwright 在 1024×768 與 768×1024 實際完成一題輸入題、一題圖像選擇題、錯答重試與進度前進。
 - [x] 確認無水平溢位、可見按鈕至少 48px，瀏覽器主控台 0 錯誤與 0 警告。
-- [ ] 提交功能分支，快進合併至 `main`，在合併後重跑完整測試。
-- [ ] 推送 `main`，以 `git subtree push --prefix dist origin gh-pages` 發布，等待 Pages workflow 成功後檢查公開網址。
+- [x] 提交功能分支，快進合併至 `main`，在合併後重跑完整測試。
+- [x] 推送 `main`，以 `git subtree push --prefix dist origin gh-pages` 發布，等待 Pages workflow 成功後檢查公開網址。
