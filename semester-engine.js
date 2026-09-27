@@ -209,6 +209,35 @@ function practiceVariants(lesson) {
 const visualQuestion = (level, prompt, answer, explain, visual, responseType = 'input', options) =>
   practiceQuestion(level, prompt, answer, explain, responseType === 'choice' ? options : [], { responseType, visual });
 
+function stableIndexOrder(length, seed) {
+  const order = Array.from({ length }, (_, index) => index);
+  let state = [...seed].reduce((hash, character) => ((hash * 31) + character.charCodeAt(0)) >>> 0, 2166136261);
+  for (let index = length - 1; index > 0; index -= 1) {
+    state = ((state * 1664525) + 1013904223) >>> 0;
+    const swapIndex = state % (index + 1);
+    [order[index], order[swapIndex]] = [order[swapIndex], order[index]];
+  }
+  return order;
+}
+
+function balanceChoicePositions(questions, seed) {
+  const usedByOptionCount = new Map();
+  return questions.map((question) => {
+    if (question.responseType !== 'choice' || question.options.length < 2) return question;
+    const optionCount = question.options.length;
+    const used = usedByOptionCount.get(optionCount) || 0;
+    usedByOptionCount.set(optionCount, used + 1);
+    const cycle = Math.floor(used / optionCount);
+    const positionOrder = stableIndexOrder(optionCount, `${seed}:${optionCount}:${cycle}`);
+    const targetIndex = positionOrder[used % optionCount];
+    const answerIndex = question.options.indexOf(question.answer);
+    if (answerIndex === targetIndex) return question;
+    const options = question.options.filter((_, index) => index !== answerIndex);
+    options.splice(targetIndex, 0, question.answer);
+    return { ...question, options };
+  });
+}
+
 function visualPracticeVariants(lesson) {
   const visual = buildVisualModel(lesson.visual);
   switch (visual.type) {
@@ -221,18 +250,33 @@ function visualPracticeVariants(lesson) {
         visualQuestion('易錯', '數字在數線上變大時，應該往哪裡走？', '往右', '數線往右的數會變大。', { type: 'sequence', values }, 'choice', ['往右', '往左', '留在原地']),
       ];
     }
-    case 'place-value':
+    case 'place-value': {
+      const hundreds = visual.hundreds;
+      const tens = visual.tens;
+      const ones = visual.ones;
+      const value = hundreds * 100 + tens * 10 + ones;
+      const model = { type: 'place-value', hundreds, tens, ones };
+      return [
+        visualQuestion('填空', '圖中的百、十、一合起來是多少？', value, `${hundreds} 個百、${tens} 個十、${ones} 個一合起來是 ${value}。`, model),
+        visualQuestion('圖像', `這個數的十位代表多少？`, tens * 10, `十位是 ${tens}，代表 ${tens} 個十，也就是 ${tens * 10}。`, model),
+        visualQuestion('應用', '哪一個式子與圖中的位值模型相同？', `${hundreds * 100}＋${tens * 10}＋${ones}`, '依序寫出百位、十位與個位的值。', model, 'choice', [`${hundreds * 100}＋${tens * 10}＋${ones}`, `${hundreds * 100}＋${ones * 10}＋${tens}`, `${tens * 100}＋${hundreds * 10}＋${ones}`]),
+        visualQuestion('易錯', `如果再加 1 個十，會變成多少？`, value + 10, `${value}＋10＝${value + 10}。`, model, 'choice', numericOptions(value + 10, 10)),
+      ];
+    }
     case 'money': {
       const hundreds = visual.hundreds;
       const tens = visual.tens;
       const ones = visual.ones;
       const value = hundreds * 100 + tens * 10 + ones;
-      const model = { type: 'place-value', hundreds, tens, ones, money: visual.type === 'money' };
+      const model = { type: 'money', hundreds, tens, ones };
+      const target = value + 18;
+      const price = value - 12;
+      const payment = `${hundreds} 張 100 元、${tens} 個 10 元、${ones} 個 1 元`;
       return [
-        visualQuestion('填空', `圖中的百、十、一合起來是多少${visual.type === 'money' ? '元' : ''}？`, value, `${hundreds} 個百、${tens} 個十、${ones} 個一合起來是 ${value}。`, model),
-        visualQuestion('圖像', `這個數的十位代表多少？`, tens * 10, `十位是 ${tens}，代表 ${tens} 個十，也就是 ${tens * 10}。`, model),
-        visualQuestion('應用', '哪一個式子與圖中的位值模型相同？', `${hundreds * 100}＋${tens * 10}＋${ones}`, '依序寫出百位、十位與個位的值。', model, 'choice', [`${hundreds * 100}＋${tens * 10}＋${ones}`, `${hundreds * 100}＋${ones * 10}＋${tens}`, `${tens * 100}＋${hundreds * 10}＋${ones}`]),
-        visualQuestion('易錯', `如果再加 1 個十，會變成多少？`, value + 10, `${value}＋10＝${value + 10}。`, model, 'choice', numericOptions(value + 10, 10)),
+        visualQuestion('數錢', '數一數圖中的紙鈔和硬幣，一共有多少元？', value, `把 ${hundreds * 100}、${tens * 10} 和 ${ones} 合起來，共 ${value} 元。`, model),
+        visualQuestion('補足', `圖中有 ${value} 元，要買 ${target} 元的物品，還差多少元？`, target - value, `${target}－${value}＝${target - value} 元。`, model),
+        visualQuestion('付款', `要剛好付 ${value} 元，哪一種拿法正確？`, payment, '分別看百元、十元與一元的張數，合起來要剛好。', model, 'choice', [payment, `${hundreds} 張 100 元、${ones} 個 10 元、${tens} 個 1 元`, `${tens} 張 100 元、${hundreds} 個 10 元、${ones} 個 1 元`]),
+        visualQuestion('找零', `拿圖中的錢買 ${price} 元的物品，會找回多少元？`, value - price, `${value}－${price}＝${value - price} 元。`, model, 'choice', numericOptions(value - price, 10)),
       ];
     }
     case 'arithmetic': {
@@ -367,7 +411,8 @@ export function buildPracticeSet(lesson, unitLessons = []) {
       : `${lesson.question.explain}把答案放回題目再檢查一次。`,
   };
   const ownQuestions = [base, ...practiceVariants(lesson), ...visualPracticeVariants(lesson)];
-  if (lesson.kind !== 'challenge') return ownQuestions.map(enrichExplanation);
+  const positionSeed = `${lesson.code || 'challenge'}:${lesson.title}`;
+  if (lesson.kind !== 'challenge') return balanceChoicePositions(ownQuestions.map(enrichExplanation), positionSeed);
 
   const sourceSets = [
     ownQuestions,
@@ -390,10 +435,10 @@ export function buildPracticeSet(lesson, unitLessons = []) {
   const fullSet = [...unique, ...reviewQuestions].filter((question, index, items) =>
     items.findIndex((other) => other.prompt === question.prompt) === index);
   const challengeLevels = ['暖身', '圖像', '觀念', '填空', '熟練', '生活', '應用', '判斷', '易錯', '驗算', '整合', '推理', '進階', '複習', '達人'];
-  return fullSet.slice(0, 15).map((question, index) => enrichExplanation({
+  return balanceChoicePositions(fullSet.slice(0, 15).map((question, index) => enrichExplanation({
       ...question,
       level: challengeLevels[index],
-    }));
+    })), positionSeed);
 }
 
 export function createPracticeSession(questions) {
