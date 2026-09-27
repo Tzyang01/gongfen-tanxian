@@ -113,11 +113,56 @@ test('一般課程固定八題，單元挑戰固定十五題，並混合輸入�
   }
 });
 
+test('每一節選擇題的正確答案平均分散，不能靠固定選第一個通關', () => {
+  for (const unit of SEMESTER_COURSE.units) {
+    for (const lesson of unit.lessons) {
+      const questions = SemesterEngine.buildPracticeSet(lesson, unit.lessons)
+        .filter((question) => question.responseType === 'choice');
+      for (const optionCount of new Set(questions.map((question) => question.options.length))) {
+        const positions = questions
+          .filter((question) => question.options.length === optionCount)
+          .map((question) => question.options.indexOf(question.answer));
+        const frequency = Array.from({ length: optionCount }, (_, index) =>
+          positions.filter((position) => position === index).length);
+        assert.ok(
+          Math.max(...frequency) - Math.min(...frequency) <= 1,
+          `${unit.title}／${lesson.title} 的 ${optionCount} 選項正解位置不平均：${frequency.join(',')}`,
+        );
+      }
+    }
+  }
+});
+
+test('同一單元各節不共用可背誦的正解位置順序', () => {
+  for (const unit of SEMESTER_COURSE.units) {
+    const signatures = unit.lessons
+      .filter((lesson) => lesson.kind !== 'challenge')
+      .map((lesson) => SemesterEngine.buildPracticeSet(lesson, unit.lessons)
+        .filter((question) => question.responseType === 'choice' && question.options.length === 3)
+        .map((question) => question.options.indexOf(question.answer) + 1)
+        .join(''));
+    assert.ok(new Set(signatures).size > 1, `${unit.title} 的各節正解順序完全相同：${signatures[0]}`);
+  }
+});
+
+test('第一單元的付錢練習使用獨立錢幣情境，不重複位值題模板', () => {
+  const [numberLesson, placeValueLesson, moneyLesson] = SEMESTER_COURSE.units[0].lessons;
+  const numberPrompts = new Set(SemesterEngine.buildPracticeSet(numberLesson).map((question) => question.prompt));
+  const placeValuePrompts = new Set(SemesterEngine.buildPracticeSet(placeValueLesson).map((question) => question.prompt));
+  const moneyQuestions = SemesterEngine.buildPracticeSet(moneyLesson);
+  const moneyVisualQuestions = moneyQuestions.filter((question) => question.visual);
+
+  assert.equal(moneyVisualQuestions.length, 4);
+  assert.ok(moneyVisualQuestions.every((question) => question.visual.type === 'money'));
+  assert.ok(moneyVisualQuestions.every((question) => !numberPrompts.has(question.prompt)));
+  assert.ok(moneyVisualQuestions.every((question) => !placeValuePrompts.has(question.prompt)));
+});
+
 test('圖像題覆蓋照片參考的主要數學呈現方式', () => {
   const visualTypes = new Set(SEMESTER_COURSE.units.flatMap((unit) => unit.lessons)
     .flatMap((lesson) => SemesterEngine.buildPracticeSet(lesson).map((question) => question.visual?.type))
     .filter(Boolean));
-  for (const type of ['sequence', 'place-value', 'vertical', 'groups', 'ruler', 'capacity', 'clock', 'timeline', 'area-grid']) {
+  for (const type of ['sequence', 'place-value', 'money', 'vertical', 'groups', 'ruler', 'capacity', 'clock', 'timeline', 'area-grid']) {
     assert.ok(visualTypes.has(type), `缺少 ${type} 圖像題`);
   }
 });

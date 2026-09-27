@@ -205,6 +205,9 @@ function renderPracticeVisual(spec) {
     case 'place-value':
       html = `<div class="practice-place-value">${[['百', spec.hundreds], ['十', spec.tens], ['一', spec.ones]].map(([label, count]) => `<div><strong>${safe(label)}</strong><span>${safe(count)}</span><i>${dots(count, spec.money ? '＄' : '■')}</i></div>`).join('')}</div>`;
       break;
+    case 'money':
+      html = `<div class="practice-money"><div><strong>100 元</strong><i>${Array.from({ length: spec.hundreds }, () => '<span class="bill">100</span>').join('')}</i><b>${safe(spec.hundreds)} 張</b></div><div><strong>10 元</strong><i>${Array.from({ length: spec.tens }, () => '<span class="coin ten">10</span>').join('')}</i><b>${safe(spec.tens)} 個</b></div><div><strong>1 元</strong><i>${Array.from({ length: spec.ones }, () => '<span class="coin one">1</span>').join('')}</i><b>${safe(spec.ones)} 個</b></div></div>`;
+      break;
     case 'vertical':
       html = `<div class="practice-vertical"><span>${safe(spec.a)}</span><span><b>${safe(spec.operator)}</b>${safe(Math.abs(spec.b))}</span><i></i><strong>□</strong></div>${spec.trail ? `<div class="practice-trail">${spec.trail.map((value) => `<span>${safe(value)}</span>`).join('<b>→</b>')}</div>` : ''}`;
       break;
