@@ -123,7 +123,7 @@ function renderUnit() {
     const done = state.completed[index];
     return `<button class="lesson-map-card" data-lesson="${index}" ${open ? '' : 'disabled'}>
       <span class="lesson-status">${done ? '★' : open ? String(index + 1) : '🔒'}</span>
-      <div><small>${item.kind === 'challenge' ? '統整挑戰 · 10 題' : `${item.code} · 4 題練習`}</small><h3>${item.title}</h3><p>${item.goal}</p></div>
+      <div><small>${item.kind === 'challenge' ? '統整挑戰 · 15 題' : `${item.code} · 8 題練習`}</small><h3>${item.title}</h3><p>${item.goal}</p></div>
       <b aria-hidden="true">${open ? '→' : ''}</b>
     </button>`;
   }).join('');
@@ -170,10 +170,76 @@ function renderPracticeQuestion() {
   $('#practice-progress-bar').style.width = `${(practiceSession.current / total) * 100}%`;
   $('#question-level').textContent = question.level;
   $('#question-title').textContent = question.prompt;
-  $('#question-options').innerHTML = question.options.map((option) => `<button data-answer="${String(option)}">${option}</button>`).join('');
+  renderPracticeVisual(question.visual);
+  const isInput = question.responseType === 'input';
+  $('#question-options').hidden = isInput;
+  $('#question-options').innerHTML = isInput ? '' : question.options.map((option) => {
+    const value = escapeHtml(option);
+    return `<button data-answer="${value}">${value}</button>`;
+  }).join('');
+  $('#question-input-form').hidden = !isInput;
+  $('#question-input').value = '';
+  $('#question-input').disabled = false;
+  $('#question-input').className = '';
+  $('#question-submit').disabled = false;
+  $('#question-input').inputMode = typeof question.answer === 'number' ? 'numeric' : 'text';
   $('#practice-next').hidden = true;
   elements.feedback.textContent = '';
   elements.feedback.className = 'feedback';
+}
+
+function renderPracticeVisual(spec) {
+  const container = $('#question-visual');
+  if (!spec) {
+    container.hidden = true;
+    container.innerHTML = '';
+    return;
+  }
+  const safe = (value) => escapeHtml(value ?? '');
+  const dots = (count, icon = '●') => Array.from({ length: Math.min(Number(count) || 0, 10) }, () => `<i>${safe(icon)}</i>`).join('');
+  let html = '';
+  switch (spec.type) {
+    case 'sequence':
+      html = `<div class="practice-sequence">${spec.values.map((value, index) => `${index ? `<b>${safe(spec.connector ?? '—')}</b>` : ''}<span class="${value === null ? 'blank' : ''}">${value === null ? '?' : safe(value)}</span>`).join('')}</div>`;
+      break;
+    case 'place-value':
+      html = `<div class="practice-place-value">${[['百', spec.hundreds], ['十', spec.tens], ['一', spec.ones]].map(([label, count]) => `<div><strong>${safe(label)}</strong><span>${safe(count)}</span><i>${dots(count, spec.money ? '＄' : '■')}</i></div>`).join('')}</div>`;
+      break;
+    case 'vertical':
+      html = `<div class="practice-vertical"><span>${safe(spec.a)}</span><span><b>${safe(spec.operator)}</b>${safe(Math.abs(spec.b))}</span><i></i><strong>□</strong></div>${spec.trail ? `<div class="practice-trail">${spec.trail.map((value) => `<span>${safe(value)}</span>`).join('<b>→</b>')}</div>` : ''}`;
+      break;
+    case 'groups': {
+      const counts = spec.counts || Array.from({ length: spec.groups }, () => spec.each);
+      html = `<div class="practice-groups">${counts.map((count, index) => `<div><small>第 ${index + 1} 組</small><i>${dots(count, spec.icon)}</i><strong>${safe(count)} 個</strong></div>`).join('')}</div>`;
+      break;
+    }
+    case 'ruler': {
+      const max = Math.max(1, Number(spec.max) || 10);
+      html = `<div class="practice-ruler"><div class="practice-ruler-segment" style="--left:${(spec.start / max) * 100}%;--width:${(Math.abs(spec.end - spec.start) / max) * 100}%"></div>${Array.from({ length: max + 1 }, (_, index) => `<span><i></i><b>${index}</b></span>`).join('')}</div>`;
+      break;
+    }
+    case 'capacity': {
+      const max = Math.max(...spec.values, 1);
+      html = `<div class="practice-capacity">${spec.values.map((value, index) => `<div><strong>${safe(spec.labels[index])}</strong><i><u style="height:${(value / max) * 100}%"></u></i><span>${safe(value)} 杯</span></div>`).join('')}</div>`;
+      break;
+    }
+    case 'clock': {
+      const hourAngle = ((spec.hour % 12) + spec.minute / 60) * 30;
+      const minuteAngle = spec.minute * 6;
+      html = `<div class="practice-clock"><i class="hour" style="transform:rotate(${hourAngle}deg)"></i><i class="minute" style="transform:rotate(${minuteAngle}deg)"></i><b></b>${Array.from({ length: 12 }, (_, index) => `<span style="--n:${index + 1}">${index + 1}</span>`).join('')}</div>`;
+      break;
+    }
+    case 'timeline':
+      html = `<div class="practice-timeline"><strong>${safe(spec.start)}</strong><i><span>${safe(spec.minutes)} 分鐘</span></i><strong>${safe(spec.end)}</strong></div>`;
+      break;
+    case 'area-grid':
+      html = `<div class="practice-areas">${spec.areas.map((area, index) => `<div><strong>${safe(spec.labels[index])}</strong><i>${Array.from({ length: Math.min(area, 24) }, () => '<span></span>').join('')}</i><b>${safe(area)} 格</b></div>`).join('')}</div>`;
+      break;
+    default:
+      html = '<p>仔細看圖，再想一想。</p>';
+  }
+  container.innerHTML = html;
+  container.hidden = false;
 }
 
 function renderVisual(spec) {
@@ -460,16 +526,15 @@ $('#back-adaptive-unit').addEventListener('click', () => {
   renderUnit();
   show('unit');
 });
-$('#question-options').addEventListener('click', (event) => {
-  const button = event.target.closest('[data-answer]');
-  if (!button) return;
+function submitPracticeAnswer(answer, sourceElement = null) {
   const unit = SEMESTER_COURSE.units[currentUnitIndex];
-  const item = unit.lessons[currentLessonIndex];
   const question = currentQuestions[practiceSession.current];
-  practiceSession = answerPracticeQuestion(practiceSession, currentQuestions, button.dataset.answer);
+  practiceSession = answerPracticeQuestion(practiceSession, currentQuestions, answer);
   const correct = practiceSession.lastCorrect;
   [...$('#question-options').children].forEach((option) => { option.disabled = true; });
-  button.classList.add(correct ? 'correct' : 'wrong');
+  $('#question-input').disabled = true;
+  $('#question-submit').disabled = true;
+  sourceElement?.classList.add(correct ? 'correct' : 'wrong');
   if (correct) {
     elements.feedback.textContent = `答對了！${question.explain}`;
     elements.feedback.className = 'feedback success';
@@ -485,7 +550,7 @@ $('#question-options').addEventListener('click', (event) => {
       $('#next-button').disabled = last;
       elements.feedback.textContent = `整組完成！${question.explain} 你把每一題都想清楚了。`;
       if (last) {
-        $('#celebration-title').textContent = `${unit.title}，10 題總挑戰完成！`;
+        $('#celebration-title').textContent = `${unit.title}，15 題總挑戰完成！`;
         setTimeout(() => elements.celebration.showModal(), 650);
       }
     } else {
@@ -495,8 +560,32 @@ $('#question-options').addEventListener('click', (event) => {
     elements.feedback.textContent = `還差一點點。${question.explain} 再想一次，你可以的。`;
     elements.feedback.className = 'feedback retry';
     tone(false);
-    setTimeout(() => { [...$('#question-options').children].forEach((option) => { option.disabled = false; option.classList.remove('wrong'); }); }, 900);
+    setTimeout(() => {
+      [...$('#question-options').children].forEach((option) => { option.disabled = false; option.classList.remove('wrong'); });
+      $('#question-input').disabled = false;
+      $('#question-input').classList.remove('wrong');
+      $('#question-submit').disabled = false;
+      if (question.responseType === 'input') {
+        $('#question-input').select();
+      }
+    }, 900);
   }
+}
+
+$('#question-options').addEventListener('click', (event) => {
+  const button = event.target.closest('[data-answer]');
+  if (button) submitPracticeAnswer(button.dataset.answer, button);
+});
+$('#question-input-form').addEventListener('submit', (event) => {
+  event.preventDefault();
+  const input = $('#question-input');
+  if (!input.value.trim()) {
+    elements.feedback.textContent = '先把答案填進空格，再按送出。';
+    elements.feedback.className = 'feedback retry';
+    input.focus();
+    return;
+  }
+  submitPracticeAnswer(input.value, input);
 });
 
 $('#home-button').addEventListener('click', () => { renderUnitGrid(); show('home'); });

@@ -54,8 +54,14 @@ const numericOptions = (answer, step = 1) => {
   return [...unique.slice(shift), ...unique.slice(0, shift)];
 };
 
-const practiceQuestion = (level, prompt, answer, explain, options) => ({
-  level, prompt, answer, explain, options: options ?? numericOptions(answer),
+const practiceQuestion = (level, prompt, answer, explain, options, extras = {}) => ({
+  level,
+  prompt,
+  answer,
+  explain,
+  options: options ?? numericOptions(answer),
+  responseType: extras.responseType || 'choice',
+  visual: extras.visual || null,
 });
 
 const formatTime = (hour, minute) => `${hour} 時 ${String(minute).padStart(2, '0')} 分`;
@@ -200,9 +206,153 @@ function practiceVariants(lesson) {
   }
 }
 
+const visualQuestion = (level, prompt, answer, explain, visual, responseType = 'input', options) =>
+  practiceQuestion(level, prompt, answer, explain, responseType === 'choice' ? options : [], { responseType, visual });
+
+function visualPracticeVariants(lesson) {
+  const visual = buildVisualModel(lesson.visual);
+  switch (visual.type) {
+    case 'numberline': {
+      const values = [visual.focus - 2, visual.focus - 1, null, visual.focus + 1, visual.focus + 2];
+      return [
+        visualQuestion('填空', '數列中空格應該填哪一個數？', visual.focus, `前後每次都多 1，空格是 ${visual.focus}。`, { type: 'sequence', values }),
+        visualQuestion('圖像', `從 ${visual.start} 走到 ${visual.end}，數線上共前進幾格？`, visual.end - visual.start, `${visual.end}－${visual.start}＝${visual.end - visual.start}。`, { type: 'sequence', values: [visual.start, null, visual.end], connector: '→' }),
+        visualQuestion('應用', `數到 ${visual.focus + 2} 之後，下一個數是多少？`, visual.focus + 3, `往後數一個就是 ${visual.focus + 3}。`, { type: 'sequence', values: [visual.focus, visual.focus + 1, visual.focus + 2, null] }, 'choice', numericOptions(visual.focus + 3)),
+        visualQuestion('易錯', '數字在數線上變大時，應該往哪裡走？', '往右', '數線往右的數會變大。', { type: 'sequence', values }, 'choice', ['往右', '往左', '留在原地']),
+      ];
+    }
+    case 'place-value':
+    case 'money': {
+      const hundreds = visual.hundreds;
+      const tens = visual.tens;
+      const ones = visual.ones;
+      const value = hundreds * 100 + tens * 10 + ones;
+      const model = { type: 'place-value', hundreds, tens, ones, money: visual.type === 'money' };
+      return [
+        visualQuestion('填空', `圖中的百、十、一合起來是多少${visual.type === 'money' ? '元' : ''}？`, value, `${hundreds} 個百、${tens} 個十、${ones} 個一合起來是 ${value}。`, model),
+        visualQuestion('圖像', `這個數的十位代表多少？`, tens * 10, `十位是 ${tens}，代表 ${tens} 個十，也就是 ${tens * 10}。`, model),
+        visualQuestion('應用', '哪一個式子與圖中的位值模型相同？', `${hundreds * 100}＋${tens * 10}＋${ones}`, '依序寫出百位、十位與個位的值。', model, 'choice', [`${hundreds * 100}＋${tens * 10}＋${ones}`, `${hundreds * 100}＋${ones * 10}＋${tens}`, `${tens * 100}＋${hundreds * 10}＋${ones}`]),
+        visualQuestion('易錯', `如果再加 1 個十，會變成多少？`, value + 10, `${value}＋10＝${value + 10}。`, model, 'choice', numericOptions(value + 10, 10)),
+      ];
+    }
+    case 'arithmetic': {
+      const result = visual.result;
+      const inverse = visual.operator === '+' ? '－' : '＋';
+      return [
+        visualQuestion('直式', '看直式算出答案。', result, `${visual.a}${visual.operator}${visual.b}＝${result}。`, { type: 'vertical', a: visual.a, b: visual.b, operator: visual.operator }),
+        visualQuestion('填空', `答案 ${result} 再加 10 是多少？`, result + 10, `${result}＋10＝${result + 10}。`, { type: 'vertical', a: result, b: 10, operator: '+' }),
+        visualQuestion('驗算', '哪一個運算可以用來驗算？', inverse === '－' ? `${result}－${visual.b}＝${visual.a}` : `${result}＋${visual.b}＝${visual.a}`, '用相反運算可以回到原來的數。', { type: 'vertical', a: visual.a, b: visual.b, operator: visual.operator }, 'choice', inverse === '－' ? [`${result}－${visual.b}＝${visual.a}`, `${result}＋${visual.b}＝${visual.a}`, `${visual.a}－${visual.b}＝${result}`] : [`${result}＋${visual.b}＝${visual.a}`, `${result}－${visual.b}＝${visual.a}`, `${visual.a}＋${visual.b}＝${result}`]),
+        visualQuestion('易錯', '直式計算時最先要檢查什麼？', '位值對齊', '個位對個位、十位對十位，才能正確計算。', { type: 'vertical', a: visual.a, b: visual.b, operator: visual.operator }, 'choice', ['位值對齊', '只看答案大小', '把數字全部靠左']),
+      ];
+    }
+    case 'comparison': {
+      const difference = Math.abs(visual.left - visual.right);
+      const symbol = visual.left > visual.right ? '＞' : visual.left < visual.right ? '＜' : '＝';
+      return [
+        visualQuestion('填空', '兩個數相差多少？', difference, `大數減小數，相差 ${difference}。`, { type: 'vertical', a: Math.max(visual.left, visual.right), b: Math.min(visual.left, visual.right), operator: '－' }),
+        visualQuestion('圖像', `如果兩邊都加 10，${visual.left + 10} 與 ${visual.right + 10} 相差多少？`, difference, '兩邊加上相同數，相差不變。', { type: 'vertical', a: Math.max(visual.left, visual.right) + 10, b: Math.min(visual.left, visual.right) + 10, operator: '－' }),
+        visualQuestion('應用', `看數列判斷：${visual.left} 應該用哪個符號和 ${visual.right} 比較？`, symbol, '從高位開始比較。', { type: 'sequence', values: [visual.left, null, visual.right], connector: '' }, 'choice', ['＞', '＜', '＝']),
+        visualQuestion('易錯', '大於、小於符號的大開口要朝向哪裡？', '較大的數', '符號的大開口朝向較大的數。', { type: 'sequence', values: [visual.left, symbol, visual.right], connector: '' }, 'choice', ['較大的數', '較小的數', '永遠朝右']),
+      ];
+    }
+    case 'part-whole': {
+      const [first, second] = visual.parts;
+      return [
+        visualQuestion('圖像', `全體 ${visual.total} 裡已知 ${first}，另一部分是多少？`, second, `${visual.total}－${first}＝${second}。`, { type: 'groups', groups: 2, counts: [first, second], total: visual.total, icon: '●' }),
+        visualQuestion('填空', `${first}＋□＝${visual.total}，□是多少？`, second, `缺少的部分是 ${visual.total}－${first}＝${second}。`, { type: 'vertical', a: visual.total, b: first, operator: '－' }),
+        visualQuestion('應用', '已知兩個部分，要找全體用什麼運算？', '加法', '兩個部分合起來就是全體。', { type: 'groups', groups: 2, counts: [first, second], total: visual.total, icon: '●' }, 'choice', ['加法', '減法', '大小比較']),
+        visualQuestion('驗算', '哪一個式子可以檢查全體和部分？', `${first}＋${second}＝${visual.total}`, '兩個部分相加要回到全體。', { type: 'groups', groups: 2, counts: [first, second], total: visual.total, icon: '●' }, 'choice', [`${first}＋${second}＝${visual.total}`, `${visual.total}＋${first}＝${second}`, `${first}－${second}＝${visual.total}`]),
+      ];
+    }
+    case 'compare-bars':
+    case 'units':
+    case 'ruler': {
+      const first = visual.type === 'compare-bars' ? visual.lengths[0] : visual.type === 'units' ? visual.smallCount : visual.length;
+      const second = visual.type === 'compare-bars' ? visual.lengths[1] : visual.type === 'units' ? visual.largeCount : Math.max(0, visual.length - 1);
+      const ruler = visual.type === 'ruler'
+        ? { type: 'ruler', start: visual.start, end: visual.end, max: visual.max }
+        : { type: 'ruler', start: 0, end: Math.max(first, second), max: Math.max(10, first, second) };
+      return [
+        visualQuestion('測量', '看圖算出較長的長度或單位數。', Math.max(first, second), `較長的是 ${Math.max(first, second)}。`, ruler),
+        visualQuestion('填空', '兩個長度或單位數相差多少？', Math.abs(first - second), `大數減小數，相差 ${Math.abs(first - second)}。`, ruler),
+        visualQuestion('圖像', '測量時要先確認什麼？', '起點和終點', '先找到起點與終點，再計算中間距離。', ruler, 'choice', ['起點和終點', '只看終點', '只看物品顏色']),
+        visualQuestion('易錯', '物品沒有從 0 開始時，怎麼求長度？', '終點刻度－起點刻度', '長度是兩端刻度之間的差。', ruler, 'choice', ['終點刻度－起點刻度', '終點刻度＋起點刻度', '只讀終點刻度']),
+      ];
+    }
+    case 'capacity': {
+      const [first, second] = visual.values;
+      const largerIndex = first >= second ? 0 : 1;
+      const capacity = { type: 'capacity', values: visual.values, labels: visual.labels };
+      return [
+        visualQuestion('填空', `看杯數圖填空：兩個容器相差幾杯？`, Math.abs(first - second), `較多杯減較少杯，相差 ${Math.abs(first - second)} 杯。`, capacity),
+        visualQuestion('圖像', '較大的容量是幾杯？', Math.max(first, second), `圖中較多的是 ${Math.max(first, second)} 杯。`, capacity),
+        visualQuestion('應用', '哪一個容器的容量較大？', visual.labels[largerIndex], '用同樣大的杯子量，杯數較多的容量較大。', capacity, 'choice', visual.labels),
+        visualQuestion('易錯', '圖中為什麼可以直接比杯數？', '使用相同大小的杯子', '單位相同，數量才能公平比較。', capacity, 'choice', ['使用相同大小的杯子', '容器顏色相同', '容器高度相同']),
+      ];
+    }
+    case 'two-step': {
+      const first = visual.values[1];
+      const result = visual.values[2];
+      const model = { type: 'vertical', a: visual.start, b: visual.steps[0], operator: visual.steps[0] >= 0 ? '+' : '－', trail: visual.values };
+      return [
+        visualQuestion('填空', '故事的第一步完成後是多少？', first, `第一步後是 ${first}。`, model),
+        visualQuestion('圖像', '兩步全部完成後是多少？', result, `依故事順序完成後是 ${result}。`, model),
+        visualQuestion('應用', '做第二步時應該從哪個數開始？', first, '第一步的答案就是第二步的新起點。', model, 'choice', numericOptions(first, 10)),
+        visualQuestion('易錯', '兩步驟題應該按什麼順序計算？', '按故事發生的順序', '先完成第一個變化，再做第二個變化。', model, 'choice', ['按故事發生的順序', '先算數字較大的', '只算最後一步']),
+      ];
+    }
+    case 'groups': {
+      const model = { type: 'groups', groups: visual.groups, each: visual.each, icon: '🍎' };
+      return [
+        visualQuestion('圖像', '看圖數一數，一共有幾個？', visual.total, `${visual.groups} 組、每組 ${visual.each} 個，共 ${visual.total} 個。`, model),
+        visualQuestion('填空', `每組 ${visual.each} 個，共 ${visual.total} 個，可以分成幾組？`, visual.groups, `${visual.total} 是 ${visual.groups} 個 ${visual.each}。`, model),
+        visualQuestion('算式', '哪一個乘法算式和圖相同？', `${visual.each}×${visual.groups}`, '每組數量在前，組數在後。', model, 'choice', [`${visual.each}×${visual.groups}`, `${visual.each}＋${visual.groups}`, `${visual.total}－${visual.each}`]),
+        visualQuestion('應用', `如果再加一組 ${visual.each} 個，一共有幾個？`, visual.total + visual.each, `${visual.total}＋${visual.each}＝${visual.total + visual.each}。`, model, 'choice', numericOptions(visual.total + visual.each, visual.each)),
+      ];
+    }
+    case 'clock': {
+      const clock = { type: 'clock', hour: visual.hour, minute: visual.minute };
+      const minutePointer = visual.minute === 0 ? 12 : visual.minute / 5;
+      return [
+        visualQuestion('鐘面', '分針指向的大格代表幾分？', visual.minute, `分針指向 ${minutePointer}，代表 ${visual.minute} 分。`, clock),
+        visualQuestion('填空', '鐘面上的短針告訴我們幾時？', visual.hour, `短針是時針，這時是 ${visual.hour} 時。`, clock),
+        visualQuestion('報讀', '這個鐘面是幾時幾分？', formatTime(visual.hour, visual.minute), '先看分針，再看時針。', clock, 'choice', [formatTime(visual.hour, visual.minute), formatTime(visual.hour, (visual.minute + 5) % 60), formatTime((visual.hour % 12) + 1, visual.minute)]),
+        visualQuestion('易錯', '鐘面上的長針主要看什麼？', '幾分', '長針是分針，用來看幾分。', clock, 'choice', ['幾分', '幾時', '星期幾']),
+      ];
+    }
+    case 'timeline': {
+      const timeline = { type: 'timeline', start: visual.start, end: visual.end, minutes: visual.minutes };
+      const [endHour, endMinute] = visual.end.split(':').map(Number);
+      return [
+        visualQuestion('時間線', '從開始到結束共經過幾分鐘？', visual.minutes, `沿時間線從 ${visual.start} 走到 ${visual.end}，共 ${visual.minutes} 分鐘。`, timeline),
+        visualQuestion('填空', '結束時刻的分針是幾分？', endMinute, `結束時刻是 ${visual.end}，所以是 ${endMinute} 分。`, timeline),
+        visualQuestion('應用', '時間線上的右邊端點代表什麼？', '結束時刻', '時間從左往右前進，右端是結束時刻。', timeline, 'choice', ['結束時刻', '開始時刻', '容量大小']),
+        visualQuestion('易錯', '求經過時間時應該怎麼想？', '從開始走到結束', '經過時間是兩個時刻之間的距離。', timeline, 'choice', ['從開始走到結束', '把兩個時刻相加', `只看 ${endHour} 時`]),
+      ];
+    }
+    case 'area-compare':
+    case 'area': {
+      const areas = visual.type === 'area-compare' ? visual.areas : [visual.unitCount, visual.unitCount + visual.columns];
+      const labels = visual.type === 'area-compare' ? visual.labels : ['原來的面', '多一排的面'];
+      const maxArea = Math.max(...areas);
+      const areaModel = { type: 'area-grid', areas, labels, rows: visual.rows, columns: visual.columns };
+      return [
+        visualQuestion('方格', '圖中較大的面有幾個方格？', maxArea, `方格較多的面有 ${maxArea} 格。`, areaModel),
+        visualQuestion('填空', '兩個面相差幾個方格？', Math.abs(areas[0] - areas[1]), `較多格減較少格，相差 ${Math.abs(areas[0] - areas[1])} 格。`, areaModel),
+        visualQuestion('比較', '用方格比較時，方格必須怎樣？', '每一格一樣大', '單位方格同大才能公平比較。', areaModel, 'choice', ['每一格一樣大', '兩邊格子大小不同', '只數外圈']),
+        visualQuestion('易錯', '鋪方格時哪一種做法正確？', '鋪滿、不留縫、不重疊', '每一格都要剛好鋪在面上。', areaModel, 'choice', ['鋪滿、不留縫、不重疊', '中間可以留縫', '方格可以互相重疊']),
+      ];
+    }
+    default:
+      return [];
+  }
+}
+
 export function buildPracticeSet(lesson, unitLessons = []) {
   const enrichExplanation = (question) => ({
     ...question,
+    responseType: question.responseType || 'choice',
+    visual: question.visual || null,
     explain: question.explain.length >= 8
       ? question.explain
       : `${question.explain}把答案放回題目再檢查一次。`,
@@ -210,11 +360,13 @@ export function buildPracticeSet(lesson, unitLessons = []) {
   const base = {
     level: '暖身',
     ...lesson.question,
+    responseType: lesson.question.responseType || 'choice',
+    visual: lesson.question.visual || null,
     explain: lesson.question.explain.length >= 8
       ? lesson.question.explain
       : `${lesson.question.explain}把答案放回題目再檢查一次。`,
   };
-  const ownQuestions = [base, ...practiceVariants(lesson)];
+  const ownQuestions = [base, ...practiceVariants(lesson), ...visualPracticeVariants(lesson)];
   if (lesson.kind !== 'challenge') return ownQuestions.map(enrichExplanation);
 
   const sourceSets = [
@@ -223,7 +375,8 @@ export function buildPracticeSet(lesson, unitLessons = []) {
       .filter((item) => item.kind !== 'challenge')
       .map((item) => buildPracticeSet(item)),
   ];
-  const candidates = Array.from({ length: 4 }, (_, round) =>
+  const roundOrder = [0, 4, 1, 5, 2, 6, 3, 7];
+  const candidates = roundOrder.map((round) =>
     sourceSets.map((questions) => questions[round])).flat().filter(Boolean);
   const unique = candidates.filter((question, index) =>
     candidates.findIndex((other) => other.prompt === question.prompt) === index);
@@ -231,12 +384,15 @@ export function buildPracticeSet(lesson, unitLessons = []) {
     practiceQuestion('整合', `完成「${lesson.title}」時，第一步應該做什麼？`, lesson.steps[0], `先找出重要資訊，才能選擇正確的方法。`, lesson.steps),
     practiceQuestion('易錯', `哪一項是「${lesson.title}」中特別要避開的錯誤？`, lesson.mistake, `認出常見陷阱，檢查時就能及早修正。`, [lesson.mistake, lesson.remember, lesson.steps[0]]),
     practiceQuestion('達人', `完成挑戰後，哪一句最值得記住？`, lesson.remember, `這句話能提醒你把方法和檢查一起做好。`, [lesson.remember, lesson.mistake, lesson.steps[1]]),
+    practiceQuestion('複習', `遇到「${lesson.title}」的新題目時，先找哪個提示？`, lesson.steps[0], `先使用本課的第一個步驟，能幫助你找到解題方向。`, lesson.steps),
+    practiceQuestion('檢查', `寫完「${lesson.title}」後，哪個做法最可靠？`, lesson.remember, `用本課的記憶句重新檢查，能及早發現錯誤。`, [lesson.remember, lesson.mistake, lesson.steps[0]]),
   ];
   const fullSet = [...unique, ...reviewQuestions].filter((question, index, items) =>
     items.findIndex((other) => other.prompt === question.prompt) === index);
-  return fullSet.slice(0, 10).map((question, index) => enrichExplanation({
+  const challengeLevels = ['暖身', '圖像', '觀念', '填空', '熟練', '生活', '應用', '判斷', '易錯', '驗算', '整合', '推理', '進階', '複習', '達人'];
+  return fullSet.slice(0, 15).map((question, index) => enrichExplanation({
       ...question,
-      level: ['暖身', '觀念', '熟練', '圖像', '應用', '生活', '判斷', '易錯', '整合', '達人'][index],
+      level: challengeLevels[index],
     }));
 }
 
@@ -247,7 +403,7 @@ export function createPracticeSession(questions) {
 export function answerPracticeQuestion(session, questions, choice) {
   if (session.completed) return session;
   const expected = questions[session.current]?.answer;
-  const lastCorrect = String(choice) === String(expected);
+  const lastCorrect = normalizePracticeAnswer(choice) === normalizePracticeAnswer(expected);
   if (!lastCorrect) return { ...session, lastCorrect };
   const correct = session.correct + 1;
   const completed = correct === questions.length;
@@ -257,6 +413,13 @@ export function answerPracticeQuestion(session, questions, choice) {
     completed,
     lastCorrect,
   };
+}
+
+export function normalizePracticeAnswer(value) {
+  return String(value ?? '')
+    .replace(/[０-９]/g, (digit) => String.fromCharCode(digit.charCodeAt(0) - 0xfee0))
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 export function buildVisualModel(spec) {
