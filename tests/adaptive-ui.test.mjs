@@ -6,11 +6,14 @@ const html = readFileSync(new URL('../dist/index.html', import.meta.url), 'utf8'
 const app = readFileSync(new URL('../dist/app.js', import.meta.url), 'utf8');
 const css = readFileSync(new URL('../dist/styles.css', import.meta.url), 'utf8');
 
-test('第四單元提供引導式入口與一步一畫面', () => {
-  for (const id of ['adaptive-entry', 'adaptive-view', 'adaptive-skill-list', 'adaptive-question', 'adaptive-options', 'adaptive-feedback']) {
+test('全部十個單元共用引導式入口與一步一畫面', () => {
+  for (const id of ['adaptive-entry', 'adaptive-entry-title', 'adaptive-start', 'adaptive-view', 'adaptive-unit-label', 'adaptive-title', 'adaptive-skill-list', 'adaptive-question', 'adaptive-options', 'adaptive-feedback']) {
     assert.match(html, new RegExp(`id="${id}"`));
   }
-  assert.match(app, /UNIT4_ADAPTIVE/);
+  assert.match(app, /ADAPTIVE_COURSE/);
+  assert.match(app, /getAdaptiveUnit/);
+  assert.doesNotMatch(app, /UNIT4_ADAPTIVE/);
+  assert.doesNotMatch(app, /currentUnitIndex\s*=\s*3/);
   assert.match(app, /createGuidedSession/);
   assert.match(app, /currentGuidedStep/);
   assert.match(app, /persistAdaptiveSession/);
@@ -24,6 +27,8 @@ test('頁首可切換學習者並經大人驗證開啟家長報告', () => {
   assert.match(app, /restoreLearnerStore/);
   assert.match(app, /buildParentReport/);
   assert.match(app, /escapeHtml\(profile\.nickname\)/);
+  assert.match(app, /ADAPTIVE_COURSE\.units\.map/);
+  assert.match(html, /id="parent-report-summary"/);
 });
 
 test('平板互動提供至少 48px 觸控區並不只用顏色傳達狀態', () => {

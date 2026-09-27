@@ -109,6 +109,25 @@ test('家長報告只顯示能力狀態、常見錯誤與下次建議', () => {
   ]);
 });
 
+test('家長報告能把新單元的錯誤類型轉成具體觀察', () => {
+  const profile = {
+    skills: {
+      counting: { state: 'guided', errorCounts: { 'place-value-carry': 2 } },
+      clock: { state: 'practicing', errorCounts: { 'elapsed-strategy': 3 } },
+      area: { state: 'guided', errorCounts: { 'area-unit-count': 1 } },
+    },
+  };
+  const definitions = [
+    { id: 'counting', title: '數數', recommendation: '用數線。' },
+    { id: 'clock', title: '時間', recommendation: '撥時鐘。' },
+    { id: 'area', title: '面積', recommendation: '數方格。' },
+  ];
+  assert.deepEqual(
+    AdaptiveEngine.buildParentReport(profile, definitions).map((item) => item.commonError),
+    ['個位滿十時還需要練習換成一個十', '經過時間的計算還需要分段思考', '用方格比較面的大小時容易漏數或重複數'],
+  );
+});
+
 test('舊版單一進度會轉入預設角色且新角色互不影響', () => {
   const oldProgress = { units: { 'unit-4': { stars: 1, completed: [true, false, false] } } };
   let store = AdaptiveEngine.restoreLearnerStore(null, oldProgress, ['part-whole', 'choose-operation', 'inverse-check']);

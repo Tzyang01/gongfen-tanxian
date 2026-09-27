@@ -20,7 +20,7 @@ import {
   restoreLearnerStore,
   setActiveLearner,
 } from './adaptive-engine.js';
-import { UNIT4_ADAPTIVE } from './unit4-adaptive-data.js';
+import { ADAPTIVE_COURSE, getAdaptiveUnit } from './adaptive-course-data.js';
 
 const $ = (selector) => document.querySelector(selector);
 const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (character) => ({
@@ -28,7 +28,7 @@ const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (character) => (
 }[character]));
 const storageKey = 'grade2-semester1-math-progress-v1';
 const learnerStorageKey = 'grade2-semester1-learners-v2';
-const skillIds = UNIT4_ADAPTIVE.skills.map((skill) => skill.id);
+const skillIds = ADAPTIVE_COURSE.skillIds;
 const legacyProgress = restoreSemesterProgress(localStorage.getItem(storageKey), SEMESTER_COURSE);
 let learnerStore = restoreLearnerStore(localStorage.getItem(learnerStorageKey), legacyProgress, skillIds);
 let progress = learnerStore.profiles[learnerStore.activeProfileId].semesterProgress;
@@ -39,6 +39,7 @@ let currentQuestions = [];
 let practiceSession = null;
 let adaptiveSkill = null;
 let adaptiveSession = null;
+let activeAdaptiveUnit = null;
 
 const elements = {
   home: $('#home-view'), unit: $('#unit-view'), lesson: $('#lesson-view'), adaptive: $('#adaptive-view'), unitGrid: $('#unit-grid'),
@@ -110,7 +111,13 @@ function renderUnit() {
   $('#story-dialogue').textContent = unit.story.dialogue;
   $('#story-closing').textContent = unit.story.closing;
   $('#curriculum-sections').textContent = `課程內容：${unit.curriculumSections.join('、')}`;
-  $('#adaptive-entry').hidden = unit.id !== UNIT4_ADAPTIVE.unitId;
+  const adaptiveUnit = getAdaptiveUnit(unit.id);
+  $('#adaptive-entry').hidden = !adaptiveUnit;
+  if (adaptiveUnit) {
+    $('#adaptive-entry-title').textContent = `${unit.title}也可以一步一步學`;
+    $('#adaptive-entry-description').textContent = adaptiveUnit.intro;
+    $('#adaptive-start').textContent = `開始${adaptiveUnit.title} →`;
+  }
   elements.lessonMap.innerHTML = unit.lessons.map((item, index) => {
     const open = canOpenSemesterLesson(progress, unit.id, index);
     const done = state.completed[index];
@@ -294,15 +301,16 @@ function persistAdaptiveSession() {
 }
 
 function renderAdaptiveHub(message = '') {
+  if (!activeAdaptiveUnit) return;
   const profile = activeProfile();
   $('#adaptive-learner-label').textContent = `${profile.avatar} ${profile.nickname}，今天想修復哪一個地方？`;
-  $('#island-restoration').innerHTML = UNIT4_ADAPTIVE.skills.map((skill) => {
+  $('#island-restoration').innerHTML = activeAdaptiveUnit.skills.map((skill) => {
     const restored = profile.restoredScenes.includes(skill.id);
     return `<div class="island-scene ${restored ? 'restored' : ''}"><span aria-hidden="true">${restored ? '✨' : '🌫️'}</span><strong>${skill.scene}</strong><small>${restored ? '已修復' : '等你點亮'}</small></div>`;
   }).join('');
   const title = message || '選一個能力開始練習';
   $('#adaptive-hub-title').textContent = title;
-  $('#adaptive-skill-list').innerHTML = UNIT4_ADAPTIVE.skills.map((skill) => {
+  $('#adaptive-skill-list').innerHTML = activeAdaptiveUnit.skills.map((skill) => {
     const state = profile.skills[skill.id]?.state || 'not_started';
     return `<button class="adaptive-skill-card ${state === 'mastered' ? 'mastered' : ''}" data-adaptive-skill="${skill.id}">
       <span aria-hidden="true">${skill.icon}</span><div><small>${skillStateLabels[state] || '正在學習'}</small><h3>${skill.title}</h3><p>${skill.goal}</p></div><b aria-hidden="true">→</b>
@@ -313,14 +321,20 @@ function renderAdaptiveHub(message = '') {
 }
 
 function openAdaptive() {
+  const unit = SEMESTER_COURSE.units[currentUnitIndex];
+  activeAdaptiveUnit = getAdaptiveUnit(unit.id);
+  if (!activeAdaptiveUnit) return;
   adaptiveSkill = null;
   adaptiveSession = null;
+  $('#back-adaptive-unit').textContent = `← 回到第 ${unit.number} 單元`;
+  $('#adaptive-unit-label').textContent = activeAdaptiveUnit.title;
+  $('#adaptive-title').textContent = activeAdaptiveUnit.intro;
   renderAdaptiveHub();
   show('adaptive');
 }
 
 function startAdaptiveSkill(skillId) {
-  adaptiveSkill = UNIT4_ADAPTIVE.skills.find((skill) => skill.id === skillId);
+  adaptiveSkill = activeAdaptiveUnit?.skills.find((skill) => skill.id === skillId);
   if (!adaptiveSkill) return;
   adaptiveSession = createGuidedSession(adaptiveSkill.questions, adaptiveSkill.id);
   $('#adaptive-hub').hidden = true;
@@ -333,7 +347,7 @@ function renderAdaptiveStep(feedbackText = '', feedbackKind = '') {
   if (!adaptiveSkill || !adaptiveSession) return;
   const question = adaptiveSkill.questions[adaptiveSession.questionIndex];
   const step = currentGuidedStep(adaptiveSession, adaptiveSkill.questions);
-  const stepNames = { listen: '聽題', relationship: '找關係', model: '擺模型', operation: '選運算', answer: '算答案' };
+  const stepNames = activeAdaptiveUnit?.stepLabels || {};
   $('#adaptive-step-label').textContent = `第 ${adaptiveSession.stepIndex + 1} 步，共 5 步`;
   $('#adaptive-step-track').innerHTML = question.steps.map((item, index) =>
     `<i class="${index < adaptiveSession.stepIndex ? 'done' : index === adaptiveSession.stepIndex ? 'current' : ''}"><span>${index + 1}</span><small>${stepNames[item.id]}</small></i>`).join('');
@@ -391,12 +405,22 @@ function switchProfile(profileId) {
 
 function renderParentReport() {
   const profile = activeProfile();
-  const report = buildParentReport(profile, UNIT4_ADAPTIVE.skills);
-  $('#parent-report-title').textContent = `${profile.avatar} ${profile.nickname}的加減應用進度`;
-  $('#parent-report-content').innerHTML = report.map((item) => `<article>
-    <div><strong>${item.title}</strong><span>${item.stateLabel}</span></div>
-    <p><b>目前觀察：</b>${item.commonError}</p><p><b>下次建議：</b>${item.recommendation}</p>
-  </article>`).join('');
+  const allSkills = ADAPTIVE_COURSE.units.flatMap((unit) => unit.skills);
+  const mastered = allSkills.filter((skill) => profile.skills[skill.id]?.state === 'mastered').length;
+  const started = allSkills.filter((skill) => (profile.skills[skill.id]?.state || 'not_started') !== 'not_started').length;
+  $('#parent-report-title').textContent = `${profile.avatar} ${profile.nickname}的二上數學進度`;
+  $('#parent-report-summary').textContent = `已開始 ${started} / ${allSkills.length} 項能力，其中 ${mastered} 項已精熟。`;
+  $('#parent-report-content').innerHTML = ADAPTIVE_COURSE.units.map((unit, index) => {
+    const report = buildParentReport(profile, unit.skills);
+    const unitStarted = report.filter((item) => item.state !== 'not_started').length;
+    return `<details class="parent-report-unit" ${unitStarted > 0 || index === 0 ? 'open' : ''}>
+      <summary><strong>${escapeHtml(unit.title.replace('引導探險', ''))}</strong><span>${unitStarted} / ${report.length} 已開始</span></summary>
+      <div>${report.map((item) => `<article>
+        <div><strong>${escapeHtml(item.title)}</strong><span>${escapeHtml(item.stateLabel)}</span></div>
+        <p><b>目前觀察：</b>${escapeHtml(item.commonError)}</p><p><b>下次建議：</b>${escapeHtml(item.recommendation)}</p>
+      </article>`).join('')}</div>
+    </details>`;
+  }).join('');
 }
 
 elements.unitGrid.addEventListener('click', (event) => {
@@ -422,7 +446,7 @@ $('#adaptive-options').addEventListener('click', (event) => {
 });
 $('#adaptive-continue').addEventListener('click', () => {
   adaptiveSession = advanceGuidedStep(adaptiveSession, adaptiveSkill.questions);
-  renderAdaptiveStep('聽完了！現在先找出全體和部分。', 'success');
+  renderAdaptiveStep('聽完了！現在先看清楚這題的關鍵。', 'success');
 });
 $('#adaptive-listen').addEventListener('click', () => {
   if (adaptiveSkill && adaptiveSession) speak(adaptiveSkill.questions[adaptiveSession.questionIndex].narration);
@@ -433,7 +457,6 @@ $('#adaptive-exit').addEventListener('click', () => {
 });
 $('#back-adaptive-unit').addEventListener('click', () => {
   persistAdaptiveSession();
-  currentUnitIndex = 3;
   renderUnit();
   show('unit');
 });
